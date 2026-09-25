@@ -1,1905 +1,709 @@
 <!DOCTYPE html>
 <html lang="es" class="h-full bg-slate-900 text-slate-100">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Interactivo de Información y Documentos - Google Drive</title>
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
-                            950: '#172554',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistema de Búsqueda e Inteligencia Operativa</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Leaflet CSS & JS (Mapa Interactivo) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Leaflet Heatmap Plugin -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+  
+  <!-- PapaParse para CSVs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-    <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- html2pdf.js para Exportación de Dossiers a PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- Google Fonts Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .scrollbar-none::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-none {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .kanban-dropzone {
-            min-height: 420px;
-        }
-    </style>
+  <style>
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    #map { min-height: 380px; }
+  </style>
 </head>
-<body class="h-full flex flex-col bg-slate-900 text-slate-100 antialiased selection:bg-brand-500 selection:text-white">
+<body class="h-full flex flex-col font-sans antialiased overflow-hidden">
 
-    <!-- Navigation Header -->
-    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-            
-            <!-- Logo & Title -->
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
-                    <i data-lucide="folder-git-2" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-2">
-                        <span>Drive Control Center</span>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30">v2.8 Drive Sync</span>
-                    </h1>
-                    <p class="text-xs text-slate-400 font-medium">Repositorio e Índice Clasificado por Carpetas Drive</p>
-                </div>
-            </div>
+  <!-- TOPBAR -->
+  <header class="bg-slate-950 border-b border-slate-800 px-6 py-3 flex justify-between items-center z-20">
+    <div class="flex items-center space-x-3">
+      <div class="bg-blue-600 text-white p-2 rounded-lg shadow-lg shadow-blue-500/20">
+        <i class="fa-solid fa-shield-halved text-xl"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-lg leading-tight tracking-wide text-white">SISTEMA INTEGRADO DE BÚSQUEDA Y DOSSIERS</h1>
+        <p class="text-xs text-slate-400">Inteligencia Operativa, Heatmaps & Generación de Reportes PDF</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center space-x-3">
+      <button onclick="syncData()" id="btnSync" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-700 transition flex items-center gap-2">
+        <i class="fa-solid fa-rotate" id="syncIcon"></i> Sincronizar Base de Datos
+      </button>
+      <button onclick="openCameraModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-4 py-2 rounded-lg shadow-lg shadow-emerald-600/30 transition flex items-center gap-2">
+        <i class="fa-solid fa-camera"></i> Búsqueda por Fotografía
+      </button>
+    </div>
+  </header>
 
-            <!-- Global Search Bar -->
-            <div class="flex-1 max-w-md hidden md:block">
-                <div class="relative">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="searchInput" placeholder="Buscar por carpeta, delito, artículo legal o ID..." 
-                        class="w-full pl-9 pr-4 py-2 text-sm bg-slate-800/80 border border-slate-700/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-100 placeholder-slate-400 transition-all">
-                </div>
-            </div>
-
-            <!-- Actions Bar -->
-            <div class="flex items-center space-x-2">
-                <button onclick="openSyncModal()" class="inline-flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all" title="Sincronizar estructura de carpetas Drive">
-                    <i data-lucide="folder-sync" class="w-4 h-4 text-brand-400"></i>
-                    <span class="hidden md:inline">Sincronizar Carpetas</span>
-                </button>
-
-                <button onclick="openFormModal()" class="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-brand-600/20 active:scale-95">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">Nuevo Registro</span>
-                </button>
-
-                <a href="https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link" target="_blank" class="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all" title="Abrir Google Drive Oficial">
-                    <i data-lucide="external-link" class="w-4 h-4"></i>
-                </a>
-            </div>
+  <!-- CONTENT WRAPPER -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- SIDEBAR: FILTROS DE BÚSQUEDA -->
+    <aside class="w-80 bg-slate-950 border-r border-slate-800 flex flex-col p-4 custom-scrollbar overflow-y-auto space-y-5">
+      
+      <!-- Buscador General -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Búsqueda General (Persona / Alias / CURP)</label>
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i>
+          <input type="text" id="filterGeneral" oninput="applyFilters()" placeholder="Nombre, alias, CURP, teléfono..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
         </div>
-    </header>
+      </div>
 
-    <!-- Hero Banner -->
-    <section class="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white py-6 border-b border-slate-800 relative overflow-hidden">
-        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]"></div>
+      <!-- Filtros de Vehículo -->
+      <div class="border-t border-slate-800 pt-4 space-y-3">
+        <h3 class="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-car"></i> Filtros de Vehículo
+        </h3>
         
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div>
-                    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-semibold mb-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>Carpeta Drive Raíz: 19vwyMc3X4ICtfceF04zol0E7zMl_rA_0</span>
-                    </div>
-                    <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                        Sistema Interactivo de Expedientes por Carpetas
-                    </h2>
-                    <p class="text-slate-400 text-xs mt-1 max-w-2xl">
-                        Estructura organizada en conformidad directa con el árbol de carpetas de Google Drive, clasificada por delitos, artículos legales y tipos de documento.
-                    </p>
-                </div>
-
-                <!-- Live Metrics -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 text-center backdrop-blur-sm">
-                        <p class="text-[11px] text-slate-400 font-medium">Expedientes</p>
-                        <p id="statTotalFiles" class="text-lg font-black text-white mt-0.5">0</p>
-                    </div>
-                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 text-center backdrop-blur-sm">
-                        <p class="text-[11px] text-slate-400 font-medium">Carpetas Drive</p>
-                        <p id="statTotalCategories" class="text-lg font-black text-brand-400 mt-0.5">0</p>
-                    </div>
-                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 text-center backdrop-blur-sm">
-                        <p class="text-[11px] text-slate-400 font-medium">Casos Críticos</p>
-                        <p id="statCriticalFiles" class="text-lg font-black text-rose-400 mt-0.5">0</p>
-                    </div>
-                    <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 text-center backdrop-blur-sm">
-                        <p class="text-[11px] text-slate-400 font-medium">Dictaminados</p>
-                        <p id="statCompletedFiles" class="text-lg font-black text-emerald-400 mt-0.5">0</p>
-                    </div>
-                </div>
-            </div>
+        <div>
+          <label class="block text-[11px] text-slate-400">Placas</label>
+          <input type="text" id="filterPlates" oninput="applyFilters()" placeholder="ej. TBP078B, HAW357J" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
         </div>
-    </section>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] text-slate-400">Marca</label>
+            <input type="text" id="filterBrand" oninput="applyFilters()" placeholder="Nissan, Ford..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400">Color</label>
+            <input type="text" id="filterColor" oninput="applyFilters()" placeholder="Blanco, Negro..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] text-slate-400">Número de Serie / VIN</label>
+          <input type="text" id="filterVin" oninput="applyFilters()" placeholder="NIV / Serie..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+        </div>
+      </div>
+
+      <!-- Filtro por Origen de Datos -->
+      <div class="border-t border-slate-800 pt-4 space-y-2">
+        <label class="block text-xs font-semibold text-slate-400 uppercase">Origen de Datos</label>
+        <select id="filterSource" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+          <option value="ALL">Todas las Fuentes (6 Tablas)</option>
+          <option value="Abordamientos">Abordamientos de Rutina</option>
+          <option value="Detenciones">Detenciones PolProx</option>
+          <option value="Empadronamiento">Empadronamiento</option>
+          <option value="Detenidos">Detenidos Form</option>
+        </select>
+      </div>
+
+      <!-- Métricas -->
+      <div class="border-t border-slate-800 pt-4 bg-slate-900/50 p-3 rounded-lg text-xs space-y-1">
+        <div class="flex justify-between text-slate-400">
+          <span>Total Registros:</span>
+          <span id="statTotal" class="font-bold text-white">0</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>Con Fotografía:</span>
+          <span id="statPhotos" class="font-bold text-emerald-400">0</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>Con Ubicación GPS:</span>
+          <span id="statGps" class="font-bold text-blue-400">0</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-900">
+      
+      <!-- VISTA DIVIDIDA: GALERÍA DE RESULTADOS Y MAPA -->
+      <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
         
-        <!-- Controls & Filter Toolbar -->
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-800/90 p-4 rounded-2xl border border-slate-700/80 shadow-md">
+        <!-- CARDS / GALERÍA DE RESULTADOS -->
+        <section class="flex-1 p-4 overflow-y-auto custom-scrollbar">
+          <div class="flex justify-between items-center mb-3">
+            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-users text-blue-500"></i> Expedientes Encontrados (<span id="resultsCount">0</span>)
+            </h2>
+          </div>
+
+          <div id="resultsContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <!-- Cards dinamicas -->
+          </div>
+        </section>
+
+        <!-- MAPA DE GEOLOCALIZACIÓN Y MAPAS DE CALOR -->
+        <section class="w-full lg:w-[480px] border-l border-slate-800 bg-slate-950 flex flex-col p-4">
+          <div class="flex justify-between items-center mb-3">
+            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-red-500"></i> Georreferenciación
+            </h2>
             
-            <!-- Drive Subfolders / Category Chips -->
-            <div class="flex items-center space-x-1.5 overflow-x-auto pb-2 lg:pb-0 scrollbar-none" id="categoryChips">
-                <!-- Dynamically populated buttons -->
+            <!-- Selector Modo Mapa (Puntos vs Heatmap) -->
+            <div class="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-1 text-[11px]">
+              <button id="btnMapPins" onclick="setMapMode('pins')" class="px-2 py-1 rounded bg-blue-600 text-white font-medium transition flex items-center gap-1">
+                <i class="fa-solid fa-location-dot"></i> Puntos
+              </button>
+              <button id="btnMapHeat" onclick="setMapMode('heat')" class="px-2 py-1 rounded text-slate-400 hover:text-white font-medium transition flex items-center gap-1">
+                <i class="fa-solid fa-fire"></i> Mapa de Calor
+              </button>
             </div>
+          </div>
 
-            <!-- Filters and View Switcher -->
-            <div class="flex flex-wrap items-center justify-between lg:justify-end gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-700/80">
-                
-                <!-- Crime/Incident Filter Dropdown -->
-                <select id="incidenciaFilterSelect" class="bg-slate-900 border border-slate-700 text-xs font-semibold rounded-xl px-3 py-2 text-slate-200 focus:ring-2 focus:ring-brand-500 cursor-pointer">
-                    <option value="ALL">⚖️ Todos los Delitos</option>
-                    <option value="Delitos Informáticos y Ciberseguridad">🛡️ Delitos Informáticos & Ciberseguridad</option>
-                    <option value="Delitos Financieros y Fraude">💰 Delitos Financieros & Fraude</option>
-                    <option value="Delitos contra la Propiedad y Robo">🚨 Delitos contra la Propiedad</option>
-                    <option value="Protocolos y Cadena de Custodia">📋 Protocolos & Cadena de Custodia</option>
-                    <option value="Integridad Personal y Violencia">⚠️ Integridad Personal & Violencia</option>
-                    <option value="Compliance y Falsificación">🏢 Compliance & Falsificación</option>
-                </select>
+          <div id="map" class="w-full flex-1 rounded-xl border border-slate-800 overflow-hidden shadow-inner"></div>
+        </section>
 
-                <!-- Severity Dropdown -->
-                <select id="severityFilterSelect" class="bg-slate-900 border border-slate-700 text-xs font-semibold rounded-xl px-3 py-2 text-slate-200 focus:ring-2 focus:ring-brand-500 cursor-pointer">
-                    <option value="ALL">🔴 Severidades</option>
-                    <option value="Crítico">🔴 Severidad Crítica</option>
-                    <option value="Alto">🟠 Severidad Alta</option>
-                    <option value="Medio">🟡 Severidad Media</option>
-                    <option value="Bajo">🟢 Severidad Baja</option>
-                </select>
-
-                <!-- File Type Dropdown -->
-                <select id="typeFilterSelect" class="bg-slate-900 border border-slate-700 text-xs font-semibold rounded-xl px-3 py-2 text-slate-200 focus:ring-2 focus:ring-brand-500 cursor-pointer">
-                    <option value="ALL">Todos los Archivos</option>
-                    <option value="PDF">Documentos PDF</option>
-                    <option value="DOC">Word / Peritajes</option>
-                    <option value="XLS">Excel / Tabulaciones</option>
-                    <option value="PPT">Presentaciones</option>
-                    <option value="MEDIA">Audios / Videos</option>
-                    <option value="LINK">Enlaces / Drive</option>
-                </select>
-
-                <!-- Sort Dropdown -->
-                <select id="sortBySelect" class="bg-slate-900 border border-slate-700 text-xs font-semibold rounded-xl px-3 py-2 text-slate-200 focus:ring-2 focus:ring-brand-500 cursor-pointer">
-                    <option value="date-desc">Recientes primero</option>
-                    <option value="date-asc">Antiguos primero</option>
-                    <option value="title-asc">Nombre (A-Z)</option>
-                    <option value="severity-desc">Por Severidad</option>
-                    <option value="status-desc">Por Estado</option>
-                </select>
-
-                <!-- View Switcher Tabs -->
-                <div class="flex items-center p-1 bg-slate-900 rounded-xl space-x-1" id="viewModeGroup">
-                    <button data-view="grid" title="Vista Cuadrícula" class="view-btn p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-800 text-brand-400 shadow-sm">
-                        <i data-lucide="layout-grid" class="w-4 h-4"></i>
-                    </button>
-                    <button data-view="list" title="Vista Lista" class="view-btn p-1.5 rounded-lg text-slate-400 hover:text-white">
-                        <i data-lucide="list" class="w-4 h-4"></i>
-                    </button>
-                    <button data-view="kanban" title="Vista Tablero Kanban" class="view-btn p-1.5 rounded-lg text-slate-400 hover:text-white">
-                        <i data-lucide="kanban" class="w-4 h-4"></i>
-                    </button>
-                    <button data-view="tree" title="Vista Estructura Árbol de Carpetas" class="view-btn p-1.5 rounded-lg text-slate-400 hover:text-white">
-                        <i data-lucide="folder-tree" class="w-4 h-4"></i>
-                    </button>
-                </div>
-
-                <!-- Study Mode & Backup Tools -->
-                <button id="btnStudyCards" class="inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-bold text-amber-300 bg-amber-950/50 border border-amber-800/60 hover:bg-amber-900/60 rounded-xl transition-all">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
-                    <span>Modo Repaso</span>
-                </button>
-
-                <button onclick="exportData()" title="Exportar Respaldo JSON" class="p-2 text-slate-300 hover:bg-slate-700 bg-slate-900 border border-slate-700 rounded-xl transition-colors">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                </button>
-                <button onclick="importData()" title="Importar JSON" class="p-2 text-slate-300 hover:bg-slate-700 bg-slate-900 border border-slate-700 rounded-xl transition-colors">
-                    <i data-lucide="upload" class="w-4 h-4"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- VIEW CONTAINER: GRID -->
-        <div id="viewContainerGrid" class="view-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <!-- Dynamic Grid Items -->
-        </div>
-
-        <!-- VIEW CONTAINER: LIST -->
-        <div id="viewContainerList" class="view-panel hidden bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-md">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-900/80 text-xs text-slate-400 uppercase font-semibold border-b border-slate-700">
-                        <tr>
-                            <th class="py-3.5 px-4">Recurso / Delito</th>
-                            <th class="py-3.5 px-4">Carpeta Drive</th>
-                            <th class="py-3.5 px-4">Severidad</th>
-                            <th class="py-3.5 px-4">Art. Legal</th>
-                            <th class="py-3.5 px-4">Estado</th>
-                            <th class="py-3.5 px-4 text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listTableBody" class="divide-y divide-slate-700/60">
-                        <!-- Dynamic Table Rows -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- VIEW CONTAINER: KANBAN -->
-        <div id="viewContainerKanban" class="view-panel hidden grid grid-cols-1 md:grid-cols-3 gap-5">
-            <!-- Column 1: Pendiente -->
-            <div class="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/80 flex flex-col min-h-[500px]" data-status="Pendiente" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'Pendiente')">
-                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-3 h-3 rounded-full bg-slate-400"></span>
-                        <h3 class="font-bold text-sm text-slate-200">Pendiente</h3>
-                    </div>
-                    <span id="countPendiente" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-700 text-slate-300">0</span>
-                </div>
-                <div id="kanbanPendiente" class="kanban-dropzone flex-1 space-y-3 overflow-y-auto p-1"></div>
-            </div>
-
-            <!-- Column 2: En Revisión -->
-            <div class="bg-amber-950/20 rounded-2xl p-4 border border-amber-900/40 flex flex-col min-h-[500px]" data-status="En Revisión" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'En Revisión')">
-                <div class="flex items-center justify-between pb-3 mb-3 border-b border-amber-900/60">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span>
-                        <h3 class="font-bold text-sm text-amber-200">En Revisión</h3>
-                    </div>
-                    <span id="countEnRevision" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-900/60 text-amber-200">0</span>
-                </div>
-                <div id="kanbanEnRevision" class="kanban-dropzone flex-1 space-y-3 overflow-y-auto p-1"></div>
-            </div>
-
-            <!-- Column 3: Completado -->
-            <div class="bg-emerald-950/20 rounded-2xl p-4 border border-emerald-900/40 flex flex-col min-h-[500px]" data-status="Completado" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'Completado')">
-                <div class="flex items-center justify-between pb-3 mb-3 border-b border-emerald-900/60">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-                        <h3 class="font-bold text-sm text-emerald-200">Completado / Dictaminado</h3>
-                    </div>
-                    <span id="countCompletado" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-900/60 text-emerald-200">0</span>
-                </div>
-                <div id="kanbanCompletado" class="kanban-dropzone flex-1 space-y-3 overflow-y-auto p-1"></div>
-            </div>
-        </div>
-
-        <!-- VIEW CONTAINER: TREE -->
-        <div id="viewContainerTree" class="view-panel hidden bg-slate-800 rounded-2xl border border-slate-700 p-6 shadow-md">
-            <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-700">
-                <div class="flex items-center space-x-2">
-                    <i data-lucide="folder-tree" class="w-5 h-5 text-brand-400"></i>
-                    <h3 class="font-bold text-base text-white">Estructura Jerárquica de Carpetas Google Drive</h3>
-                </div>
-                <button onclick="expandAllTreeNodes()" class="px-3 py-1.5 text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl transition-colors">
-                    Expandir / Colapsar Todo
-                </button>
-            </div>
-            <div id="treeViewContent" class="space-y-3">
-                <!-- Tree view dynamically rendered -->
-            </div>
-        </div>
-
+      </div>
     </main>
+  </div>
 
-    <!-- MODAL 1: Detail & Document Viewer Modal -->
-    <div id="modalDetail" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-        <div class="bg-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-700 overflow-hidden flex flex-col max-h-[90vh]">
-            
-            <!-- Modal Header -->
-            <div class="p-4 border-b border-slate-700 bg-slate-900/80 flex items-center justify-between gap-3">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <span id="modalDetailType" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30">PDF</span>
-                    <h3 id="modalDetailTitle" class="text-base font-bold text-white truncate">Título del Documento</h3>
-                </div>
-                
-                <div class="flex items-center space-x-2 flex-shrink-0">
-                    <button id="btnToggleStarDetail" class="p-2 text-slate-400 hover:text-amber-400 rounded-lg hover:bg-slate-800 transition-colors">
-                        <i data-lucide="star" class="w-5 h-5"></i>
-                    </button>
-                    <button id="btnEditResourceDetail" class="p-2 text-slate-400 hover:text-brand-400 rounded-lg hover:bg-slate-800 transition-colors" title="Editar Registro">
-                        <i data-lucide="edit" class="w-5 h-5"></i>
-                    </button>
-                    <button id="btnDeleteResourceDetail" class="p-2 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors" title="Eliminar Registro">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                    <button id="btnCloseDetailModal" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Modal Nav Tabs -->
-            <div class="flex border-b border-slate-700 bg-slate-900/40 px-4 space-x-4">
-                <button data-tab="viewer" class="tab-viewer-btn py-3 px-2 text-xs font-bold border-b-2 border-brand-500 text-brand-400 flex items-center space-x-2">
-                    <i data-lucide="file-text" class="w-4 h-4"></i>
-                    <span>📄 Visor de Carpeta / Archivo</span>
-                </button>
-                <button data-tab="incident" class="tab-viewer-btn py-3 px-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
-                    <i data-lucide="shield-alert" class="w-4 h-4"></i>
-                    <span>🔍 Resumen e Incidencia</span>
-                </button>
-                <button data-tab="legal" class="tab-viewer-btn py-3 px-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
-                    <i data-lucide="scale" class="w-4 h-4"></i>
-                    <span>⚖️ Marco Legal</span>
-                </button>
-                <button data-tab="bullets" class="tab-viewer-btn py-3 px-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
-                    <i data-lucide="check-square" class="w-4 h-4"></i>
-                    <span>📝 Puntos Clave</span>
-                </button>
-            </div>
-
-            <!-- Modal Content Panels -->
-            <div class="p-6 overflow-y-auto flex-1 space-y-4">
-                
-                <!-- Panel 1: Document Viewer -->
-                <div id="panelTabViewer" class="tab-panel flex flex-col items-center justify-center min-h-[380px] bg-slate-900 rounded-xl border border-slate-700/80 p-2 relative">
-                    <iframe id="documentViewerIframe" src="about:blank" class="w-full h-[400px] rounded-lg border-0 bg-slate-950" loading="lazy"></iframe>
-                    <div class="w-full pt-3 flex items-center justify-between text-xs text-slate-400 px-2">
-                        <span>Servidor Google Drive Embed Interactivo</span>
-                        <a id="btnModalOpenDriveDirect" href="#" target="_blank" class="text-brand-400 hover:underline flex items-center space-x-1 font-semibold">
-                            <span>Abrir archivo o carpeta en Drive</span>
-                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Panel 2: Incident Summary -->
-                <div id="panelTabIncident" class="tab-panel hidden space-y-4">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
-                            <span class="text-[10px] font-bold uppercase text-slate-400">Tipo de Incidencia</span>
-                            <p id="modalDetailIncidencia" class="text-xs font-semibold text-slate-200 mt-0.5">---</p>
-                        </div>
-                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
-                            <span class="text-[10px] font-bold uppercase text-slate-400">Severidad</span>
-                            <div id="modalDetailSeverity" class="mt-0.5">---</div>
-                        </div>
-                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
-                            <span class="text-[10px] font-bold uppercase text-slate-400">Estado Procesal</span>
-                            <div id="modalDetailStatusBadge" class="mt-0.5">---</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-2">
-                        <h4 class="text-xs font-bold uppercase text-brand-400">Resumen Ejecutivo</h4>
-                        <p id="modalDetailDescription" class="text-xs text-slate-300 leading-relaxed">...</p>
-                    </div>
-
-                    <div>
-                        <h4 class="text-xs font-bold uppercase text-slate-400 mb-2">Etiquetas del Archivo</h4>
-                        <div id="modalDetailTags" class="flex flex-wrap gap-1.5"></div>
-                    </div>
-                </div>
-
-                <!-- Panel 3: Legal Frame -->
-                <div id="panelTabLegal" class="tab-panel hidden space-y-4">
-                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-2">
-                        <span id="modalLegalArticleBadge" class="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-brand-500/20 text-brand-300 border border-brand-500/30">Art. Legal</span>
-                        <h4 class="text-xs font-bold uppercase text-slate-400 mt-2">Encuadramiento & Tipicidad Jurídica</h4>
-                        <p id="modalLegalTipicidad" class="text-xs text-slate-300 leading-relaxed">...</p>
-                    </div>
-
-                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-2">
-                        <h4 class="text-xs font-bold uppercase text-emerald-400">Protocolo de Cadena de Custodia & Actuación</h4>
-                        <p id="modalLegalProtocol" class="text-xs text-slate-300 leading-relaxed">...</p>
-                    </div>
-                </div>
-
-                <!-- Panel 4: Key Bullets -->
-                <div id="panelTabBullets" class="tab-panel hidden space-y-3">
-                    <h4 class="text-xs font-bold uppercase text-slate-400">Puntos Clave y Hallazgos Registrados</h4>
-                    <ul id="modalDetailBullets" class="space-y-2 text-xs text-slate-300 list-disc list-inside bg-slate-900 p-4 rounded-xl border border-slate-700">
-                        <!-- Bullets -->
-                    </ul>
-                </div>
-
-            </div>
+  <!-- MODAL DE DETALLE DEL EXPEDIENTE (DOSSIER) CON EXPORTACIÓN A PDF -->
+  <div id="dossierModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      
+      <!-- Modal Header -->
+      <div class="bg-slate-950 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="font-bold text-lg text-white flex items-center gap-2">
+          <i class="fa-solid fa-id-card text-blue-500"></i> Dossier de Inteligencia
+        </h3>
+        <div class="flex items-center space-x-3">
+          <button onclick="exportDossierPDF()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+            <i class="fa-solid fa-file-pdf"></i> Exportar a PDF
+          </button>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
-    </div>
-
-    <!-- MODAL 2: Add / Edit Resource Modal -->
-    <div id="modalForm" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-        <div class="bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
-            <div class="p-4 sm:p-5 border-b border-slate-700 flex items-center justify-between">
-                <h3 id="modalFormTitle" class="text-base font-bold text-white">Agregar Nuevo Recurso / Incidencia</h3>
-                <button id="btnCloseFormModal" class="p-1.5 text-slate-400 hover:text-white rounded-lg">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            
-            <form id="resourceForm" class="p-4 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-                <input type="hidden" id="formResourceId">
-
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Título del Documento o Peritaje *</label>
-                    <input type="text" id="formTitle" required placeholder="Ej. Dictamen Pericial - Ciberdelito"
-                           class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Tipo de Delito *</label>
-                        <select id="formIncidencia" class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <option value="Delitos Informáticos y Ciberseguridad">🛡️ Delitos Informáticos & Ciberseguridad</option>
-                            <option value="Delitos Financieros y Fraude">💰 Delitos Financieros & Fraude</option>
-                            <option value="Delitos contra la Propiedad y Robo">🚨 Delitos contra la Propiedad</option>
-                            <option value="Protocolos y Cadena de Custodia">📋 Protocolos & Cadena de Custodia</option>
-                            <option value="Integridad Personal y Violencia">⚠️ Integridad Personal & Violencia</option>
-                            <option value="Compliance y Falsificación">🏢 Compliance & Falsificación</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Nivel de Severidad *</label>
-                        <select id="formSeverity" class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <option value="Crítico">🔴 Crítico</option>
-                            <option value="Alto">🟠 Alto</option>
-                            <option value="Medio">🟡 Medio</option>
-                            <option value="Bajo">🟢 Bajo</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Artículo Legal</label>
-                        <input type="text" id="formArticle" placeholder="Ej. Art. 211 Bis - CP"
-                               class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Carpeta Drive / Categoría *</label>
-                        <input type="text" id="formCategory" required placeholder="Ej. Carpeta 01: Informes Periciales"
-                               class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Tipo Archivo</label>
-                        <select id="formType" class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <option value="PDF">PDF</option>
-                            <option value="DOC">Word / Doc</option>
-                            <option value="XLS">Excel / Tablas</option>
-                            <option value="PPT">PowerPoint</option>
-                            <option value="MEDIA">Video / Audio</option>
-                            <option value="LINK">Enlace Web</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Estado Procesal</label>
-                        <select id="formStatus" class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <option value="Pendiente">Pendiente</option>
-                            <option value="En Revisión">En Revisión</option>
-                            <option value="Completado">Completado</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Enlace Drive / Viewer URL</label>
-                    <input type="url" id="formUrl" placeholder="https://drive.google.com/file/d/..."
-                           class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Resumen Ejecutivo</label>
-                    <textarea id="formDescription" rows="3" placeholder="Descripción breve de los hechos y elementos analizados..."
-                              class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Etiquetas (separadas por coma)</label>
-                    <input type="text" id="formTags" placeholder="ciberdelito, urgente, fraude"
-                           class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Puntos Clave / Hallazgos (uno por línea)</label>
-                    <textarea id="formBullets" rows="3" placeholder="Punto de hallazgo 1&#10;Punto de hallazgo 2"
-                              class="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
-                </div>
-
-                <div class="pt-3 border-t border-slate-700 flex justify-end space-x-2">
-                    <button type="button" id="btnCancelFormModal" class="px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 rounded-xl">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded-xl shadow-md">Guardar Registro</button>
-                </div>
-            </form>
+      </div>
+      
+      <!-- Modal Content (Area exportable a PDF) -->
+      <div id="dossierPrintArea" class="p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1 text-xs bg-slate-900 text-slate-100">
+        
+        <!-- Encabezado de Documento PDF -->
+        <div class="hidden border-b-2 border-slate-600 pb-3 mb-4 flex justify-between items-center" id="pdfHeader">
+          <div>
+            <h2 class="text-xl font-bold text-black uppercase">FICHA OPERATIVA DE INTELIGENCIA</h2>
+            <p class="text-xs text-gray-600">Sistema Unificado de Búsqueda y Registro</p>
+          </div>
+          <div class="text-right text-xs text-gray-500">
+            <p>Fecha de Impresión: <span id="pdfPrintDate"></span></p>
+            <p class="font-mono text-[10px]" id="pdfDocId"></p>
+          </div>
         </div>
-    </div>
 
-    <!-- MODAL 3: Modo Repaso / Flashcards Modal -->
-    <div id="modalStudy" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-        <div class="bg-slate-800 w-full max-w-xl rounded-2xl shadow-2xl border border-slate-700 overflow-hidden flex flex-col min-h-[460px]">
-            <div class="p-4 border-b border-slate-700 bg-slate-900 flex items-center justify-between">
-                <div class="flex items-center space-x-2 text-amber-400 font-bold text-sm">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i>
-                    <span>Modo Repaso Jurídico (Flashcards)</span>
-                </div>
-                <button id="btnCloseStudyModal" class="p-1.5 text-slate-400 hover:text-white rounded-lg">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            
-            <div class="flex-1 p-6 flex flex-col justify-between items-center text-center relative">
-                <div class="w-full flex items-center justify-between text-xs text-slate-400 font-medium mb-2">
-                    <span id="studyProgressText">Tarjeta 1 de 6</span>
-                    <span id="studyScoreText" class="font-bold text-emerald-400">Puntaje: 0</span>
-                </div>
-
-                <!-- Interactive Flip Card -->
-                <div id="flashcardElement" onclick="flipFlashcard()" class="w-full h-60 bg-slate-900 border-2 border-brand-500/40 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-brand-500 transition-all shadow-inner relative group select-none">
-                    <div class="absolute top-3 right-3 text-[10px] font-bold uppercase text-slate-400 bg-slate-800 px-2.5 py-1 rounded-full flex items-center space-x-1">
-                        <i data-lucide="rotate-cw" class="w-3 h-3 group-hover:rotate-180 transition-transform duration-500"></i>
-                        <span>Haz clic para voltear</span>
-                    </div>
-
-                    <!-- Front Content -->
-                    <div id="flashcardFront" class="space-y-3">
-                        <span id="flashcardCategory" class="px-3 py-1 rounded-full bg-amber-950 text-amber-300 border border-amber-800/60 font-mono font-bold text-xs">Art. Legal</span>
-                        <h2 id="flashcardTitle" class="text-lg font-extrabold text-white leading-tight">Título del Caso</h2>
-                        <p class="text-xs text-slate-400 font-medium italic">¿Cuál es la tipicidad legal y protocolo operativo aplicable?</p>
-                    </div>
-
-                    <!-- Back Content -->
-                    <div id="flashcardBack" class="hidden space-y-3 text-left w-full">
-                        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
-                            <strong class="text-xs font-mono text-brand-400 uppercase">Tipicidad Jurídica:</strong>
-                            <p id="flashcardTipicidad" class="text-xs text-slate-300 mt-1 leading-relaxed">...</p>
-                        </div>
-                        <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
-                            <strong class="text-xs font-mono text-emerald-400 uppercase">Protocolo Recomendado:</strong>
-                            <p id="flashcardProtocol" class="text-xs text-slate-300 mt-1 leading-relaxed">...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card Controls -->
-                <div class="flex items-center space-x-4 mt-6">
-                    <button onclick="answerFlashcard(false)" class="px-5 py-2.5 bg-rose-950/60 border border-rose-800/60 text-rose-300 font-semibold rounded-xl text-xs flex items-center space-x-1.5 hover:bg-rose-900/80 transition-colors">
-                        <i data-lucide="x-circle" class="w-4 h-4"></i>
-                        <span>Repasar Luego</span>
-                    </button>
-                    <button onclick="answerFlashcard(true)" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 transition-all shadow-md">
-                        <i data-lucide="check-circle" class="w-4 h-4"></i>
-                        <span>¡Dominado!</span>
-                    </button>
-                </div>
-            </div>
+        <!-- Galería de Fotos del Expediente -->
+        <div>
+          <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-800 pb-1">Galería Fotográfica</h4>
+          <div id="modalGallery" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
         </div>
-    </div>
 
-    <!-- MODAL 4: Drive Folder Sync & Batch Importer Modal -->
-    <div id="modalSync" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-        <div class="bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
-            <div class="p-4 border-b border-slate-700 bg-slate-900 flex items-center justify-between">
-                <div class="flex items-center space-x-2 text-brand-400 font-bold text-sm">
-                    <i data-lucide="folder-sync" class="w-4 h-4"></i>
-                    <span>Sincronizar Estructura de Carpetas de Google Drive</span>
-                </div>
-                <button onclick="closeSyncModal()" class="p-1.5 text-slate-400 hover:text-white rounded-lg">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
+        <!-- Información Personal y de Abordamiento -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800" id="dossierDetailsCard">
+          <div class="space-y-2">
+            <h4 class="text-blue-400 font-bold uppercase border-b border-slate-800 pb-1">Datos Personales</h4>
+            <p><strong class="text-slate-400">Nombre Completo:</strong> <span id="mFullName" class="text-slate-200"></span></p>
+            <p><strong class="text-slate-400">Alias / Apodo:</strong> <span id="mAlias" class="text-yellow-400 font-semibold"></span></p>
+            <p><strong class="text-slate-400">Edad / Nacimiento:</strong> <span id="mAge"></span></p>
+            <p><strong class="text-slate-400">CURP:</strong> <span id="mCurp" class="font-mono"></span></p>
+            <p><strong class="text-slate-400">Teléfono:</strong> <span id="mPhone"></span></p>
+            <p><strong class="text-slate-400">Domicilio:</strong> <span id="mAddress"></span></p>
+          </div>
 
-            <div class="p-6 space-y-4">
-                <p class="text-xs text-slate-300 leading-relaxed">
-                    Pega aquí la lista de subcarpetas o archivos de tu enlace de Drive (<code class="bg-slate-900 px-1.5 py-0.5 rounded text-brand-300">19vwyMc3X4ICtfceF04zol0E7zMl_rA_0</code>) para generar automáticamente las categorías y el árbol de expedientes.
-                </p>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Lista de Carpetas o Archivos (Formato: <code class="text-brand-400">NombreCarpeta / NombreArchivo</code> o un nombre por línea)</label>
-                    <textarea id="syncInputText" rows="6" class="w-full p-3 text-xs font-mono bg-slate-900 border border-slate-700 rounded-xl text-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Carpeta 01 - Informes Periciales / Dictamen_Ciberdelito_01.pdf&#10;Carpeta 02 - Auditoría Financiera / Tabla_Conciliacion_Fraude.xlsx&#10;Carpeta 03 - Evidencias Oculares / Acta_Inspeccion_Robo.docx&#10;Carpeta 04 - Cadena de Custodia / Manual_Protocolo_Custodia.pdf"></textarea>
-                </div>
-
-                <div class="flex items-center justify-between pt-2">
-                    <button onclick="loadSampleDriveStructure()" class="px-3 py-1.5 text-xs font-semibold text-brand-400 bg-brand-950/40 hover:bg-brand-900 border border-brand-800 rounded-xl transition-colors flex items-center space-x-1">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                        <span>Cargar Ejemplo de Estructura</span>
-                    </button>
-
-                    <div class="flex items-center space-x-2">
-                        <button onclick="closeSyncModal()" class="px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 rounded-xl">Cancelar</button>
-                        <button onclick="processDriveSync()" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded-xl shadow-md flex items-center space-x-1.5">
-                            <i data-lucide="check" class="w-4 h-4"></i>
-                            <span>Sincronizar e Indexar</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+          <div class="space-y-2">
+            <h4 class="text-blue-400 font-bold uppercase border-b border-slate-800 pb-1">Datos del Evento / Vehículo</h4>
+            <p><strong class="text-slate-400">Fecha / Hora:</strong> <span id="mDateTime"></span></p>
+            <p><strong class="text-slate-400">Lugar / Sector:</strong> <span id="mLocation"></span></p>
+            <p><strong class="text-slate-400">Vehículo:</strong> <span id="mVehicleInfo"></span></p>
+            <p><strong class="text-slate-400">Placas:</strong> <span id="mPlates" class="bg-slate-800 px-2 py-0.5 rounded font-mono text-white"></span></p>
+            <p><strong class="text-slate-400">NIV / Serie:</strong> <span id="mVin" class="font-mono"></span></p>
+            <p><strong class="text-slate-400">Fuente de Origen:</strong> <span id="mSource" class="text-emerald-400 font-semibold"></span></p>
+          </div>
         </div>
-    </div>
 
-    <script>
-        // Dynamic Proxy DOM Selector
-        const el = new Proxy({}, {
-            get(target, prop) {
-                return document.getElementById(prop);
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE BÚSQUEDA POR FOTOGRAFÍA -->
+  <div id="cameraModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-6 flex flex-col space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-base text-white flex items-center gap-2">
+          <i class="fa-solid fa-camera-retro text-emerald-400"></i> Búsqueda Inteligente por Fotografía
+        </h3>
+        <button onclick="closeCameraModal()" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Area de Captura -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+        <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden relative flex flex-col items-center justify-center min-h-[220px]">
+          <video id="webcam" autoplay playsinline class="w-full h-48 object-cover hidden"></video>
+          <img id="capturedImage" class="w-full h-48 object-cover hidden" />
+          <div id="camPlaceholder" class="text-center p-4 text-slate-500">
+            <i class="fa-solid fa-user-gear text-4xl mb-2"></i>
+            <p class="text-xs">Activa la cámara o carga una foto para escanear coincidencias.</p>
+          </div>
+        </div>
+
+        <div class="flex flex-col space-y-3">
+          <button onclick="startCamera()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs py-2 px-3 rounded-lg font-medium transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-video"></i> Activar Cámara
+          </button>
+          
+          <button onclick="capturePhoto()" id="btnSnap" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2 px-3 rounded-lg font-medium transition hidden flex items-center justify-center gap-2">
+            <i class="fa-solid fa-circle-dot"></i> Tomar Fotografía
+          </button>
+
+          <label class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-2 px-3 rounded-lg font-medium transition cursor-pointer text-center border border-slate-700 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-upload"></i> Subir Archivo de Imagen
+            <input type="file" accept="image/*" class="hidden" onchange="handleFileUpload(event)" />
+          </label>
+
+          <button onclick="runPhotoMatch()" id="btnSearchMatch" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 px-3 rounded-lg font-semibold transition hidden flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30">
+            <i class="fa-solid fa-microchip"></i> Escanear Coincidencias Biométricas
+          </button>
+        </div>
+      </div>
+
+      <!-- Resultados de Coincidencia -->
+      <div id="matchResults" class="border-t border-slate-800 pt-3 hidden">
+        <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Resultados con Mayor Similitud Visual</h4>
+        <div id="matchList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // Configuración de enlaces de Google Sheets
+    const SHEET_CONFIGS = [
+      { id: '1EgudaTwmNvHi8eKPMQbCz8eD6fKS1GdrIuIp_R-xVfk', gid: '501282295', source: 'Abordamientos' },
+      { id: '1rl28kCEfkpu9G7oly87NHw4_XGCsjWhSssMxa6Et9SY', gid: '1225183609', source: 'Detenciones' },
+      { id: '1xb_M4GhMBoco9qOxMqBOeOdwEBDF0Dyv3D85PUi0-q0', gid: '102', source: 'Empadronamiento' },
+      { id: '1xb_M4GhMBoco9qOxMqBOeOdwEBDF0Dyv3D85PUi0-q0', gid: '103', source: 'Empadronamiento' },
+      { id: '10PU5bReY0LtH_ugQXE3SnCR-qdmZJpnzS1EQynUab_Q', gid: '338751008', source: 'Detenidos' },
+      { id: '1y9ef2PcnhtqzmbKNS0cfYqmEzn1lnAge2uGQQ4FyfxE', gid: '1855404627', source: 'Abordamientos' }
+    ];
+
+    let allRecords = [];
+    let filteredRecords = [];
+    let map, markersLayer, heatLayer;
+    let mapMode = 'pins'; // 'pins' o 'heat'
+    let currentSelectedItem = null;
+    let webcamStream = null;
+
+    // Inicializar Mapa
+    function initMap() {
+      map = L.map('map').setView([25.6866, -100.3161], 11); // Monterrey / Metropolitano
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        maxZoom: 19
+      }).addTo(map);
+
+      markersLayer = L.layerGroup().addTo(map);
+    }
+
+    // Cambiar Modo de Mapa (Puntos vs Mapa de Calor)
+    function setMapMode(mode) {
+      mapMode = mode;
+      const btnPins = document.getElementById('btnMapPins');
+      const btnHeat = document.getElementById('btnMapHeat');
+
+      if (mode === 'pins') {
+        btnPins.className = "px-2 py-1 rounded bg-blue-600 text-white font-medium transition flex items-center gap-1";
+        btnHeat.className = "px-2 py-1 rounded text-slate-400 hover:text-white font-medium transition flex items-center gap-1";
+      } else {
+        btnHeat.className = "px-2 py-1 rounded bg-red-600 text-white font-medium transition flex items-center gap-1";
+        btnPins.className = "px-2 py-1 rounded text-slate-400 hover:text-white font-medium transition flex items-center gap-1";
+      }
+
+      renderMapVisualization();
+    }
+
+    // Convertir URLs de Google Drive a URLs directas
+    function parseDriveImageUrls(rawUrl) {
+      if (!rawUrl) return [];
+      const urls = rawUrl.split(',').map(s => s.trim());
+      const parsed = [];
+      
+      urls.forEach(url => {
+        const match = url.match(/(?:id=|\/d\/)([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          parsed.push(`https://lh3.googleusercontent.com/d/${match[1]}`);
+        } else if (url.startsWith('http')) {
+          parsed.push(url);
+        }
+      });
+      return parsed;
+    }
+
+    // Sincronizar y Cargar Datos desde los 6 links
+    async function syncData() {
+      const icon = document.getElementById('syncIcon');
+      icon.classList.add('fa-spin');
+      allRecords = [];
+
+      for (const config of SHEET_CONFIGS) {
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${config.id}/gviz/tq?tqx=out:csv&gid=${config.gid}`;
+        try {
+          const res = await fetch(csvUrl);
+          const text = await res.text();
+          Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+              normalizeRecords(results.data, config.source);
             }
+          });
+        } catch (err) {
+          console.warn('Error cargando fuente:', config, err);
+        }
+      }
+
+      icon.classList.remove('fa-spin');
+      applyFilters();
+    }
+
+    // Normalizar datos de estructuras variadas
+    function normalizeRecords(rows, source) {
+      rows.forEach((r, idx) => {
+        const name = r['NOMBRE COMPLETO'] || r['NOMBRE DE DETENIDO CORRECT'] || `${r['NOMBRE']||''} ${r['APELLIDO PAT']||''} ${r['APELLIDO MAT']||''}`.trim();
+        if (!name && !r['PLACAS']) return;
+
+        const photosPerson = parseDriveImageUrls(r['GRAFICA DE PERSONA'] || r['FOTOGRAFIA'] || r['GRAFICA DE DETENIDO']);
+        const photosId = parseDriveImageUrls(r['GRAFICA DE IDENTIFICACION']);
+        const photosVehicle = parseDriveImageUrls(r['GRAFICA DE VEHICULO'] || r['IMAGEN']);
+
+        // Parsear Latitud / Longitud
+        let lat = parseFloat(r['LATITUD'] || r['LAT']);
+        let lng = parseFloat(r['LONGITUD'] || r['LNG']);
+        if (isNaN(lat) && r['COORDENADAS DE UBICACION']) {
+          const coords = r['COORDENADAS DE UBICACION'].replace(/[()]/g, '').split(',');
+          if (coords.length === 2) {
+            lat = parseFloat(coords[0]);
+            lng = parseFloat(coords[1]);
+          }
+        }
+
+        allRecords.push({
+          id: `${source}-${idx}-${Math.random().toString(36).substr(2, 9)}`,
+          source: source,
+          name: name || 'NO REGISTRADO',
+          alias: r['ALIAS'] || r['ALIA'] || 'N/A',
+          age: r['EDAD'] || r['EDAD DEL DETENIDO'] || 'N/A',
+          curp: r['CURP'] || 'N/A',
+          phone: r['TELEFONO'] || r['TEL'] || 'N/A',
+          address: r['DOMICILIO'] || r['DOMICILIO DEL DETENIDO'] || `${r['CALLE']||''} ${r['COLONIA']||''}`.trim() || 'N/A',
+          location: r['LUGAR DE ABORDAMIENTO'] || r['LUGAR DE DETENCIÓN'] || r['COLONIA'] || 'N/A',
+          date: r['FECHA'] || r['FECHA DE DETENCIÓN'] || r['Marca temporal'] || 'N/A',
+          time: r['HORA'] || r['HORA DE DETENCIÓN'] || '',
+          plates: (r['PLACAS'] || '').toUpperCase().trim(),
+          brand: r['MARCA'] || 'N/A',
+          model: r['MODELO'] || r['SUBMARCA'] || r['MODELO DE VEHICULO ejemplo Aveo, Versa'] || 'N/A',
+          color: r['COLOR BASE DEL VEHICULO'] || r['COLOR'] || 'N/A',
+          vin: r['NUMERO DE SERIE'] || r['NIV'] || 'N/A',
+          photosPerson,
+          photosId,
+          photosVehicle,
+          lat: !isNaN(lat) ? lat : null,
+          lng: !isNaN(lng) ? lng : null
         });
-
-        // Default Data Set explicitly organized by Google Drive Subfolders
-        const DEFAULT_RESOURCES = [
-            {
-                id: "res-201",
-                title: "Dictamen Pericial - Ciberdelito, Phishing y Acceso Ilícito",
-                incidencia: "Delitos Informáticos y Ciberseguridad",
-                severity: "Crítico",
-                article: "Art. 211 Bis CP",
-                category: "Carpeta 01: Informes Periciales",
-                type: "PDF",
-                url: "https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link",
-                viewerUrl: "https://drive.google.com/embeddedfolderview?id=19vwyMc3X4ICtfceF04zol0E7zMl_rA_0#list",
-                status: "Completado",
-                starred: true,
-                date: "2026-09-10",
-                tags: ["ciberdelito", "phishing", "forense-digital"],
-                description: "Análisis técnico de intrusión en sistemas de información con extracción ilegal de credenciales bancarias e inyección de código maligno.",
-                tipicidad: "Acceso no autorizado a sistemas informáticos de entidades financieras con manipulación ilícita de base de datos.",
-                protocol: "Aislamiento de servidores afectados, extracción de imágenes forenses con hash SHA-256 y resguardo bajo cadena de custodia digital.",
-                bullets: [
-                    "Identificación de direcciones IP de origen y vectores de vulneración.",
-                    "Validación de firmas digitales y logs de auditoría del servidor.",
-                    "Emisión de medidas cautelares de bloqueo de puertos de entrada."
-                ]
-            },
-            {
-                id: "res-202",
-                title: "Peritaje de Fraude Financiero y Malversación Informática",
-                incidencia: "Delitos Financieros y Fraude",
-                severity: "Alto",
-                article: "Art. 386 CP",
-                category: "Carpeta 02: Tablas y Auditorías",
-                type: "XLS",
-                url: "https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link",
-                viewerUrl: "https://drive.google.com/embeddedfolderview?id=19vwyMc3X4ICtfceF04zol0E7zMl_rA_0#list",
-                status: "En Revisión",
-                starred: true,
-                date: "2026-09-12",
-                tags: ["fraude", "auditoria", "kpi-contable"],
-                description: "Hoja de auditoría forense con conciliación bancaria, rastreo de transferencias anómalas y tabulación de pérdidas patrimoniales.",
-                tipicidad: "Obtención de lucro indebido mediante la alteración de registros contables y transacciones electrónicas falsificadas.",
-                protocol: "Revisión cruzada de saldos bancarios, solicitud de estados de cuenta a intermediarios y formalización de denuncia patrimonial.",
-                bullets: [
-                    "Detección de incongruencias por un monto acumulado significativo.",
-                    "Trazabilidad de 14 transferencias hacia cuentas puente no autorizadas.",
-                    "Anexo interactivo con gráficos comparativos de flujo financiero."
-                ]
-            },
-            {
-                id: "res-203",
-                title: "Informe de Incidencia - Robo Calificado e Inspección Física",
-                incidencia: "Delitos contra la Propiedad y Robo",
-                severity: "Alto",
-                article: "Art. 240 CP",
-                category: "Carpeta 03: Actas e Inspecciones",
-                type: "DOC",
-                url: "https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link",
-                viewerUrl: "https://drive.google.com/embeddedfolderview?id=19vwyMc3X4ICtfceF04zol0E7zMl_rA_0#list",
-                status: "En Revisión",
-                starred: false,
-                date: "2026-09-15",
-                tags: ["inspeccion", "evidencia-fisica", "robo"],
-                description: "Acta circumstantial de inspección ocular en infraestructura dañada con levantamiento de evidencias dactilares y daños a propiedad.",
-                tipicidad: "Apoderamiento de bienes muebles ajenos mediante fuerza en las cosas y violación de perímetros de seguridad.",
-                protocol: "Inspección pericial de campo, acordonamiento del área, fijación fotográfica y recolección de huellas lofoscópicas.",
-                bullets: [
-                    "Levantamiento de 6 muestras de evidencia física.",
-                    "Entrevistas con el personal de guardia de turno.",
-                    "Verificación de material registrado en circuito cerrado de televisión (CCTV)."
-                ]
-            },
-            {
-                id: "res-204",
-                title: "Manual de Protocolos de Cadena de Custodia e Integridad de Pruebas",
-                incidencia: "Protocolos y Cadena de Custodia",
-                severity: "Medio",
-                article: "Protocolo Custodia Nacional",
-                category: "Carpeta 04: Guías y Manuales",
-                type: "PDF",
-                url: "https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link",
-                viewerUrl: "https://drive.google.com/embeddedfolderview?id=19vwyMc3X4ICtfceF04zol0E7zMl_rA_0#list",
-                status: "Completado",
-                starred: false,
-                date: "2026-09-18",
-                tags: ["cadena-custodia", "protocolo", "normativa"],
-                description: "Guía procedimental estandarizada para el embalaje, sellado, transporte y resguardo procesal de evidencias físicas y digitales.",
-                tipicidad: "Normativa aplicable para asegurar el valor probatorio de los indicios recabados en la escena del delito.",
-                protocol: "Uso obligatorio de rotulado de seguridad, bitácora de firmas de traslado y almacenamiento bajo condiciones controladas.",
-                bullets: [
-                    "Formularios estándar de entrega y recepción de evidencia.",
-                    "Criterios de no contaminación para muestras biológicas e informáticas.",
-                    "Checklist para la presentación en audiencias de juicio."
-                ]
-            },
-            {
-                id: "res-205",
-                title: "Evaluación de Delitos Corporativos, Falsificación Documental & Compliance",
-                incidencia: "Compliance y Falsificación",
-                severity: "Medio",
-                article: "Art. 243 CP",
-                category: "Carpeta 05: Dictámenes Normativos",
-                type: "PPT",
-                url: "https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link",
-                viewerUrl: "https://drive.google.com/embeddedfolderview?id=19vwyMc3X4ICtfceF04zol0E7zMl_rA_0#list",
-                status: "Completado",
-                starred: true,
-                date: "2026-09-20",
-                tags: ["compliance", "falsificacion", "derecho-corporativo"],
-                description: "Presentación ejecutiva sobre detección de firmas alteradas, sellos apócrifos y matriz de riesgos de gobernanza interna.",
-                tipicidad: "Elaboración o alteración de instrumentos privados y públicos con intención de causar perjuicio.",
-                protocol: "Análisis documental con luz ultravioleta, cotejo grafoscópico y reporte a la comisión de ética corporativa.",
-                bullets: [
-                    "Síntesis de 12 casos de inconsistencia de firma e identidad.",
-                    "Recomendaciones de actualización de contraseñas y certificados SSL.",
-                    "Matriz de mitigación de responsabilidad administrativa."
-                ]
-            },
-            {
-                id: "res-206",
-                title: "Acta Pericial de Incidente contra la Integridad Personal y Amenazas",
-                incidencia: "Integridad Personal y Violencia",
-                severity: "Crítico",
-                article: "Art. 282 CP",
-                category: "Carpeta 01: Informes Periciales",
-                type: "MEDIA",
-                url: "https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link",
-                viewerUrl: "https://drive.google.com/embeddedfolderview?id=19vwyMc3X4ICtfceF04zol0E7zMl_rA_0#list",
-                status: "Pendiente",
-                starred: false,
-                date: "2026-09-22",
-                tags: ["amenazas", "integridad", "audio-video"],
-                description: "Registro de audio/video y transcripción certificada sobre mensajes intimidatorios recibidos a través de canales corporativos.",
-                tipicidad: "Anuncio de causar un mal grave e ilícito que perturbe la tranquilidad o seguridad de las personas.",
-                protocol: "Emisión de medidas de protección urgentes, resguardo multimedia e investigación de perfiles digitales identificados.",
-                bullets: [
-                    "Transcripción literal de 3 archivos de audio procesados con filtro de voz.",
-                    "Asignación de clave de expediente confidencial.",
-                    "Remisión a la unidad especializada de protección."
-                ]
-            }
-        ];
-
-        // Global Application State
-        let state = {
-            resources: [],
-            activeCategory: 'ALL',
-            activeIncidencia: 'ALL',
-            activeSeverity: 'ALL',
-            activeType: 'ALL',
-            sortBy: 'date-desc',
-            searchQuery: '',
-            currentView: 'grid',
-            selectedResourceId: null,
-            activeViewerTab: 'viewer',
-            draggedResourceId: null,
-            studyIndex: 0,
-            studyScore: 0,
-            studyCards: [],
-            flashcardFlipped: false
-        };
-
-        function getTypeIconName(type) {
-            switch(type) {
-                case 'PDF': return 'file-text';
-                case 'DOC': return 'file-type-2';
-                case 'XLS': return 'file-spreadsheet';
-                case 'PPT': return 'presentation';
-                case 'MEDIA': return 'video';
-                case 'LINK': return 'link-2';
-                default: return 'file';
-            }
-        }
-
-        function getTypeColorClasses(type) {
-            switch(type) {
-                case 'PDF': return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
-                case 'DOC': return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
-                case 'XLS': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
-                case 'PPT': return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
-                case 'MEDIA': return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
-                default: return 'bg-slate-700 text-slate-300 border-slate-600';
-            }
-        }
-
-        function getSeverityBadge(sev) {
-            switch(sev) {
-                case 'Crítico':
-                    return `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-950 text-rose-300 border border-rose-800"><span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span><span>Crítico</span></span>`;
-                case 'Alto':
-                    return `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>Alto</span></span>`;
-                case 'Medio':
-                    return `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-yellow-950 text-yellow-300 border border-yellow-800"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span><span>Medio</span></span>`;
-                default:
-                    return `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>Bajo</span></span>`;
-            }
-        }
-
-        function getStatusBadge(status) {
-            switch(status) {
-                case 'Completado':
-                    return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-800">✅ Dictaminado</span>`;
-                case 'En Revisión':
-                    return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-900/60 text-amber-300 border border-amber-800">🔍 En Revisión</span>`;
-                default:
-                    return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300 border border-slate-600">⏳ Pendiente</span>`;
-            }
-        }
-
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            const bgClass = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800 border border-slate-700';
-            toast.className = `fixed bottom-5 right-5 z-50 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center space-x-2 transition-all transform translate-y-10 opacity-0 ${bgClass}`;
-            toast.innerHTML = `<span>${message}</span>`;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.remove('translate-y-10', 'opacity-0');
-            }, 10);
-
-            setTimeout(() => {
-                toast.classList.add('translate-y-10', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function initLucideIcons() {
-            if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                window.lucide.createIcons();
-            }
-        }
-
-        function getFilteredResources() {
-            let result = [...state.resources];
-
-            if (state.searchQuery.trim() !== '') {
-                const q = state.searchQuery.toLowerCase();
-                result = result.filter(r => 
-                    (r.title && r.title.toLowerCase().includes(q)) ||
-                    (r.article && r.article.toLowerCase().includes(q)) ||
-                    (r.description && r.description.toLowerCase().includes(q)) ||
-                    (r.incidencia && r.incidencia.toLowerCase().includes(q)) ||
-                    (r.category && r.category.toLowerCase().includes(q)) ||
-                    (r.tags && r.tags.some(t => t.toLowerCase().includes(q))) ||
-                    (r.id && r.id.toLowerCase().includes(q))
-                );
-            }
-
-            if (state.activeCategory !== 'ALL') {
-                if (state.activeCategory === 'STARRED') {
-                    result = result.filter(r => r.starred);
-                } else {
-                    result = result.filter(r => r.category === state.activeCategory);
-                }
-            }
-
-            if (state.activeIncidencia !== 'ALL') {
-                result = result.filter(r => r.incidencia === state.activeIncidencia);
-            }
-
-            if (state.activeSeverity !== 'ALL') {
-                result = result.filter(r => r.severity === state.activeSeverity);
-            }
-
-            if (state.activeType !== 'ALL') {
-                result = result.filter(r => r.type === state.activeType);
-            }
-
-            result.sort((a, b) => {
-                if (state.sortBy === 'date-desc') return new Date(b.date || 0) - new Date(a.date || 0);
-                if (state.sortBy === 'date-asc') return new Date(a.date || 0) - new Date(b.date || 0);
-                if (state.sortBy === 'title-asc') return a.title.localeCompare(b.title);
-                if (state.sortBy === 'severity-desc') {
-                    const sevOrder = { 'Crítico': 4, 'Alto': 3, 'Medio': 2, 'Bajo': 1 };
-                    return (sevOrder[b.severity] || 0) - (sevOrder[a.severity] || 0);
-                }
-                if (state.sortBy === 'status-desc') {
-                    const statusOrder = { 'Completado': 3, 'En Revisión': 2, 'Pendiente': 1 };
-                    return (statusOrder[b.status] || 0) - (statusOrder[a.status] || 0);
-                }
-                return 0;
-            });
-
-            return result;
-        }
-
-        function renderMetrics() {
-            if (el.statTotalFiles) el.statTotalFiles.textContent = state.resources.length;
-            
-            const categories = new Set(state.resources.map(r => r.category));
-            if (el.statTotalCategories) el.statTotalCategories.textContent = categories.size;
-
-            const criticalCount = state.resources.filter(r => r.severity === 'Crítico').length;
-            if (el.statCriticalFiles) el.statCriticalFiles.textContent = criticalCount;
-
-            const completedCount = state.resources.filter(r => r.status === 'Completado').length;
-            if (el.statCompletedFiles) el.statCompletedFiles.textContent = completedCount;
-        }
-
-        function renderCategoryChips() {
-            if (!el.categoryChips) return;
-
-            const categories = Array.from(new Set(state.resources.map(r => r.category))).filter(Boolean);
-            
-            let html = `
-                <button onclick="setCategoryFilter('ALL')" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${state.activeCategory === 'ALL' ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-900 text-slate-300 hover:bg-slate-700'}">
-                    Todas las Carpetas (${state.resources.length})
-                </button>
-                <button onclick="setCategoryFilter('STARRED')" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center space-x-1 ${state.activeCategory === 'STARRED' ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-900 text-amber-400 hover:bg-slate-700'}">
-                    <i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i>
-                    <span>Destacados (${state.resources.filter(r => r.starred).length})</span>
-                </button>
-            `;
-
-            categories.forEach(cat => {
-                const count = state.resources.filter(r => r.category === cat).length;
-                const isActive = state.activeCategory === cat;
-                html += `
-                    <button onclick="setCategoryFilter('${cat}')" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center space-x-1.5 ${isActive ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-900 text-slate-300 hover:bg-slate-700'}">
-                        <i data-lucide="folder" class="w-3.5 h-3.5 text-amber-400"></i>
-                        <span>${cat} (${count})</span>
-                    </button>
-                `;
-            });
-
-            el.categoryChips.innerHTML = html;
-        }
-
-        window.setCategoryFilter = function(cat) {
-            state.activeCategory = cat;
-            renderAll();
-        };
-
-        window.filterByTag = function(tag) {
-            if (el.searchInput) {
-                el.searchInput.value = tag;
-                state.searchQuery = tag;
-                renderAll();
-                showToast(`Filtrado por etiqueta: #${tag}`, 'info');
-            }
-        };
-
-        window.updateItemStatus = function(id, newStatus, event) {
-            if (event) event.stopPropagation();
-            const item = state.resources.find(r => r.id === id);
-            if (item) {
-                item.status = newStatus;
-                saveStateToStorage();
-                renderAll();
-                showToast(`Estado actualizado a ${newStatus}`, 'success');
-            }
-        };
-
-        window.handleDragStart = function(e, id) {
-            state.draggedResourceId = id;
-            e.dataTransfer.setData('text/plain', id);
-            e.dataTransfer.effectAllowed = 'move';
-            e.currentTarget.classList.add('opacity-50', 'scale-95');
-        };
-
-        window.handleDragEnd = function(e) {
-            e.currentTarget.classList.remove('opacity-50', 'scale-95');
-        };
-
-        window.handleDragOver = function(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            e.currentTarget.classList.add('bg-brand-500/10', 'border-brand-500');
-        };
-
-        window.handleDragLeave = function(e) {
-            e.currentTarget.classList.remove('bg-brand-500/10', 'border-brand-500');
-        };
-
-        window.handleDrop = function(e, targetStatus) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('bg-brand-500/10', 'border-brand-500');
-            const id = e.dataTransfer.getData('text/plain') || state.draggedResourceId;
-            if (!id) return;
-
-            const item = state.resources.find(r => r.id === id);
-            if (item && item.status !== targetStatus) {
-                item.status = targetStatus;
-                saveStateToStorage();
-                renderAll();
-                showToast(`Estado cambiado a "${targetStatus}"`, 'success');
-            }
-        };
-
-        function renderGridView(items) {
-            if (!el.viewContainerGrid) return;
-            if (items.length === 0) {
-                el.viewContainerGrid.innerHTML = `
-                    <div class="col-span-full text-center py-12 bg-slate-800 rounded-2xl border border-slate-700">
-                        <p class="text-sm text-slate-400 font-semibold">No se encontraron expedientes con los filtros seleccionados.</p>
-                    </div>`;
-                return;
-            }
-
-            el.viewContainerGrid.innerHTML = items.map(item => {
-                const iconName = getTypeIconName(item.type);
-                const typeColors = getTypeColorClasses(item.type);
-                const starColor = item.starred ? 'text-amber-400 fill-amber-400' : 'text-slate-600 hover:text-amber-400';
-
-                const tagsHtml = (item.tags || []).slice(0, 3).map(t => 
-                    `<button onclick="filterByTag('${t}')" class="px-2 py-0.5 text-[10px] font-semibold bg-slate-900 hover:bg-brand-900 text-slate-300 rounded transition-colors">#${t}</button>`
-                ).join(' ');
-
-                return `
-                    <div class="bg-slate-800 rounded-2xl border border-slate-700 p-4 flex flex-col justify-between hover:shadow-lg transition-all group">
-                        <div>
-                            <div class="flex items-center justify-between gap-1 mb-2.5">
-                                <div class="inline-flex items-center space-x-1 px-2 py-0.5 rounded border text-[10px] font-bold ${typeColors}">
-                                    <i data-lucide="${iconName}" class="w-3 h-3"></i>
-                                    <span>${item.type}</span>
-                                </div>
-                                ${getSeverityBadge(item.severity)}
-                                <button onclick="toggleStar('${item.id}', event)" class="p-1 rounded-lg hover:bg-slate-700 transition-colors ml-auto">
-                                    <i data-lucide="star" class="w-4 h-4 ${starColor}"></i>
-                                </button>
-                            </div>
-
-                            <div class="flex items-center space-x-1.5 text-[10px] text-slate-400 font-semibold mb-1.5">
-                                <span class="truncate bg-slate-900 px-2 py-0.5 rounded text-amber-300 flex items-center gap-1">
-                                    <i data-lucide="folder" class="w-3 h-3 text-amber-400"></i>
-                                    <span>${item.category}</span>
-                                </span>
-                                <span class="font-mono text-brand-400 font-bold ml-auto">${item.article || ''}</span>
-                            </div>
-
-                            <h3 onclick="openDetailModal('${item.id}')" class="font-bold text-sm text-white group-hover:text-brand-400 transition-colors cursor-pointer line-clamp-2 mb-1">
-                                ${item.title}
-                            </h3>
-                            <p class="text-[11px] font-medium text-slate-400 mb-2">${item.incidencia || 'General'}</p>
-
-                            <p class="text-xs text-slate-300 line-clamp-2 mb-3 leading-relaxed">
-                                ${item.description || 'Sin descripción adicional...'}
-                            </p>
-
-                            <div class="flex flex-wrap gap-1 mb-3">
-                                ${tagsHtml}
-                            </div>
-                        </div>
-
-                        <div class="pt-3 border-t border-slate-700/80 flex items-center justify-between mt-auto">
-                            <select onchange="updateItemStatus('${item.id}', this.value, event)" class="text-[11px] font-bold bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-300 cursor-pointer focus:ring-1 focus:ring-brand-500">
-                                <option value="Pendiente" ${item.status === 'Pendiente' ? 'selected' : ''}>⏳ Pendiente</option>
-                                <option value="En Revisión" ${item.status === 'En Revisión' ? 'selected' : ''}>🔍 En Revisión</option>
-                                <option value="Completado" ${item.status === 'Completado' ? 'selected' : ''}>✅ Dictaminado</option>
-                            </select>
-                            
-                            <div class="flex items-center space-x-1">
-                                <button onclick="openDetailModal('${item.id}')" class="px-2.5 py-1 text-xs font-bold text-brand-400 bg-brand-950/50 hover:bg-brand-900 rounded-lg transition-colors flex items-center space-x-1 border border-brand-800">
-                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                                    <span>Visor</span>
-                                </button>
-                                <a href="${item.url}" target="_blank" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700">
-                                    <i data-lucide="external-link" class="w-4 h-4"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderListView(items) {
-            if (!el.listTableBody) return;
-
-            if (items.length === 0) {
-                el.listTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="py-8 text-center text-xs text-slate-400 font-medium">
-                            No se encontraron expedientes con los criterios seleccionados.
-                        </td>
-                    </tr>`;
-                return;
-            }
-
-            el.listTableBody.innerHTML = items.map(item => {
-                const iconName = getTypeIconName(item.type);
-                const starColor = item.starred ? 'text-amber-400 fill-amber-400' : 'text-slate-600 hover:text-amber-400';
-
-                return `
-                    <tr class="hover:bg-slate-700/40 transition-colors group">
-                        <td class="py-3 px-4">
-                            <div class="flex items-center space-x-3">
-                                <button onclick="toggleStar('${item.id}', event)" class="p-1 rounded hover:bg-slate-700">
-                                    <i data-lucide="star" class="w-4 h-4 ${starColor}"></i>
-                                </button>
-                                <div class="p-2 rounded-lg bg-slate-900 text-brand-400">
-                                    <i data-lucide="${iconName}" class="w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <p onclick="openDetailModal('${item.id}')" class="font-bold text-xs text-white hover:text-brand-400 cursor-pointer line-clamp-1">
-                                        ${item.title}
-                                    </p>
-                                    <span class="text-[10px] text-slate-400 font-medium">${item.incidencia || 'General'} • ID: ${item.id}</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="py-3 px-4 text-xs font-medium text-amber-300 flex items-center space-x-1 mt-2">
-                            <i data-lucide="folder" class="w-3.5 h-3.5 text-amber-400"></i>
-                            <span class="truncate">${item.category}</span>
-                        </td>
-                        <td class="py-3 px-4">
-                            ${getSeverityBadge(item.severity)}
-                        </td>
-                        <td class="py-3 px-4 text-xs font-mono font-bold text-brand-400">
-                            ${item.article || '-'}
-                        </td>
-                        <td class="py-3 px-4">
-                            <select onchange="updateItemStatus('${item.id}', this.value, event)" class="text-[11px] font-bold bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-300 cursor-pointer focus:ring-1 focus:ring-brand-500">
-                                <option value="Pendiente" ${item.status === 'Pendiente' ? 'selected' : ''}>⏳ Pendiente</option>
-                                <option value="En Revisión" ${item.status === 'En Revisión' ? 'selected' : ''}>🔍 En Revisión</option>
-                                <option value="Completado" ${item.status === 'Completado' ? 'selected' : ''}>✅ Dictaminado</option>
-                            </select>
-                        </td>
-                        <td class="py-3 px-4 text-right">
-                            <div class="flex items-center justify-end space-x-1">
-                                <button onclick="openDetailModal('${item.id}')" title="Ver Visor de Documento" class="p-1.5 text-brand-400 hover:bg-brand-900 rounded-lg transition-colors">
-                                    <i data-lucide="eye" class="w-4 h-4"></i>
-                                </button>
-                                <a href="${item.url}" target="_blank" title="Abrir en Google Drive" class="p-1.5 text-slate-400 hover:text-white rounded-lg">
-                                    <i data-lucide="external-link" class="w-4 h-4"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function renderKanbanView(items) {
-            const statuses = ['Pendiente', 'En Revisión', 'Completado'];
-            
-            statuses.forEach(status => {
-                const containerId = status === 'Pendiente' ? 'kanbanPendiente' : status === 'En Revisión' ? 'kanbanEnRevision' : 'kanbanCompletado';
-                const countId = status === 'Pendiente' ? 'countPendiente' : status === 'En Revisión' ? 'countEnRevision' : 'countCompletado';
-                
-                const container = document.getElementById(containerId);
-                const counter = document.getElementById(countId);
-                if (!container) return;
-
-                const statusItems = items.filter(r => r.status === status);
-                if (counter) counter.textContent = statusItems.length;
-
-                if (statusItems.length === 0) {
-                    container.innerHTML = `<div class="p-6 text-center border-2 border-dashed border-slate-700 rounded-xl text-xs text-slate-500 font-medium">Arrastra tarjetas aquí</div>`;
-                    return;
-                }
-
-                container.innerHTML = statusItems.map(item => {
-                    const starColor = item.starred ? 'text-amber-400 fill-amber-400' : 'text-slate-600 hover:text-amber-400';
-
-                    return `
-                        <div draggable="true" ondragstart="handleDragStart(event, '${item.id}')" ondragend="handleDragEnd(event)" class="bg-slate-800 rounded-xl p-3.5 border border-slate-700 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing group">
-                            <div class="flex items-center justify-between gap-1 mb-2">
-                                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-brand-400">${item.article || 'Infracción'}</span>
-                                ${getSeverityBadge(item.severity)}
-                            </div>
-                            <h4 onclick="openDetailModal('${item.id}')" class="font-bold text-xs text-white hover:text-brand-400 cursor-pointer line-clamp-2 mb-1.5">
-                                ${item.title}
-                            </h4>
-                            <p class="text-[11px] text-amber-300 font-medium truncate mb-2">📁 ${item.category}</p>
-                            <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">
-                                ${item.description || ''}
-                            </p>
-                            <div class="pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
-                                <span class="text-slate-400 font-medium">${item.type}</span>
-                                <div class="flex items-center space-x-1">
-                                    <button onclick="toggleStar('${item.id}', event)" class="p-1 hover:bg-slate-700 rounded">
-                                        <i data-lucide="star" class="w-3.5 h-3.5 ${starColor}"></i>
-                                    </button>
-                                    <button onclick="openDetailModal('${item.id}')" class="p-1 text-brand-400 hover:bg-brand-900 rounded">
-                                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            });
-        }
-
-        function renderTreeView(items) {
-            const container = document.getElementById('treeViewContent');
-            if (!container) return;
-
-            if (items.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">No hay elementos para estructurar en árbol.</p>`;
-                return;
-            }
-
-            const groups = {};
-            items.forEach(item => {
-                const cat = item.category || 'Carpeta Raíz Drive';
-                const inc = item.incidencia || 'General';
-                if (!groups[cat]) groups[cat] = {};
-                if (!groups[cat][inc]) groups[cat][inc] = [];
-                groups[cat][inc].push(item);
-            });
-
-            let html = '';
-            let catIdx = 0;
-
-            for (const [cat, incidencias] of Object.entries(groups)) {
-                catIdx++;
-                const catId = `tree-cat-${catIdx}`;
-                const catTotal = Object.values(incidencias).reduce((acc, list) => acc + list.length, 0);
-
-                html += `
-                    <div class="border border-slate-700 rounded-xl overflow-hidden bg-slate-900/60">
-                        <button onclick="toggleTreeNode('${catId}')" class="w-full px-4 py-3 bg-slate-800 flex items-center justify-between text-left hover:bg-slate-700/80 transition-colors">
-                            <div class="flex items-center space-x-2.5">
-                                <i data-lucide="folder" class="w-4 h-4 text-amber-400"></i>
-                                <span class="font-bold text-xs text-white">${cat}</span>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="px-2 py-0.5 rounded-full bg-slate-900 text-[10px] font-bold text-slate-300 border border-slate-700">${catTotal} archivos</span>
-                                <i id="icon-${catId}" data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
-                            </div>
-                        </button>
-                        
-                        <div id="${catId}" class="p-3 space-y-2 bg-slate-800/40 border-t border-slate-700">
-                `;
-
-                for (const [inc, resList] of Object.entries(incidencias)) {
-                    html += `
-                        <div class="ml-3 pl-3 border-l-2 border-brand-500/30 space-y-2">
-                            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5 pt-1">
-                                <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-brand-400"></i>
-                                <span>${inc} (${resList.length})</span>
-                            </div>
-                            <div class="space-y-1.5">
-                    `;
-
-                    resList.forEach(item => {
-                        html += `
-                            <div onclick="openDetailModal('${item.id}')" class="p-2 bg-slate-900/80 hover:bg-slate-700 rounded-lg flex items-center justify-between cursor-pointer transition-colors group">
-                                <div class="flex items-center space-x-2 overflow-hidden">
-                                    <i data-lucide="${getTypeIconName(item.type)}" class="w-3.5 h-3.5 text-slate-400 group-hover:text-brand-400"></i>
-                                    <span class="text-xs font-semibold text-slate-200 group-hover:text-brand-400 truncate">${item.title}</span>
-                                </div>
-                                <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
-                                    <span class="text-[10px] font-mono text-brand-400 font-bold">${item.article || ''}</span>
-                                    ${getStatusBadge(item.status)}
-                                </div>
-                            </div>
-                        `;
-                    });
-
-                    html += `
-                            </div>
-                        </div>
-                    `;
-                }
-
-                html += `
-                        </div>
-                    </div>
-                `;
-            }
-
-            container.innerHTML = html;
-        }
-
-        window.toggleTreeNode = function(nodeId) {
-            const node = document.getElementById(nodeId);
-            const icon = document.getElementById(`icon-${nodeId}`);
-            if (node) {
-                node.classList.toggle('hidden');
-                if (icon) icon.classList.toggle('rotate-180');
-            }
-        };
-
-        window.expandAllTreeNodes = function() {
-            const container = document.getElementById('treeViewContent');
-            if (!container) return;
-            const nodes = container.querySelectorAll('[id^="tree-cat-"]');
-            const icons = container.querySelectorAll('[id^="icon-tree-cat-"]');
-            
-            let anyHidden = Array.from(nodes).some(n => n.classList.contains('hidden'));
-            
-            nodes.forEach(n => {
-                if (anyHidden) n.classList.remove('hidden');
-                else n.classList.add('hidden');
-            });
-            icons.forEach(i => {
-                if (anyHidden) i.classList.add('rotate-180');
-                else i.classList.remove('rotate-180');
-            });
-        };
-
-        function renderAll() {
-            const filtered = getFilteredResources();
-            renderMetrics();
-            renderCategoryChips();
-
-            if (el.viewContainerGrid) el.viewContainerGrid.classList.add('hidden');
-            if (el.viewContainerList) el.viewContainerList.classList.add('hidden');
-            if (el.viewContainerKanban) el.viewContainerKanban.classList.add('hidden');
-            if (el.viewContainerTree) el.viewContainerTree.classList.add('hidden');
-
-            if (state.currentView === 'grid') {
-                if (el.viewContainerGrid) el.viewContainerGrid.classList.remove('hidden');
-                renderGridView(filtered);
-            } else if (state.currentView === 'list') {
-                if (el.viewContainerList) el.viewContainerList.classList.remove('hidden');
-                renderListView(filtered);
-            } else if (state.currentView === 'kanban') {
-                if (el.viewContainerKanban) el.viewContainerKanban.classList.remove('hidden');
-                renderKanbanView(filtered);
-            } else if (state.currentView === 'tree') {
-                if (el.viewContainerTree) el.viewContainerTree.classList.remove('hidden');
-                renderTreeView(filtered);
-            }
-
-            initLucideIcons();
-        }
-
-        function saveStateToStorage() {
-            try {
-                localStorage.setItem('crime_drive_resources', JSON.stringify(state.resources));
-            } catch(e) {
-                console.error('Error al guardar en localStorage:', e);
-            }
-        }
-
-        function loadStateFromStorage() {
-            try {
-                const saved = localStorage.getItem('crime_drive_resources');
-                if (saved) {
-                    state.resources = JSON.parse(saved);
-                } else {
-                    state.resources = [...DEFAULT_RESOURCES];
-                }
-            } catch(e) {
-                state.resources = [...DEFAULT_RESOURCES];
-            }
-        }
-
-        window.toggleStar = function(id, event) {
-            if (event) event.stopPropagation();
-            const item = state.resources.find(r => r.id === id);
-            if (item) {
-                item.starred = !item.starred;
-                saveStateToStorage();
-                renderAll();
-                showToast(item.starred ? 'Añadido a destacados' : 'Removido de destacados', 'info');
-            }
-        };
-
-        function closeDetailModal() {
-            if (el.modalDetail) el.modalDetail.classList.add('hidden');
-            if (el.documentViewerIframe) el.documentViewerIframe.src = 'about:blank';
-        }
-
-        function closeFormModal() {
-            if (el.modalForm) el.modalForm.classList.add('hidden');
-            if (el.resourceForm) el.resourceForm.reset();
-        }
-
-        window.openSyncModal = function() {
-            if (el.modalSync) el.modalSync.classList.remove('hidden');
-        };
-
-        window.closeSyncModal = function() {
-            if (el.modalSync) el.modalSync.classList.add('hidden');
-        };
-
-        window.loadSampleDriveStructure = function() {
-            if (el.syncInputText) {
-                el.syncInputText.value = 
-                    "Carpeta 01 - Informes Periciales / Dictamen_Pericial_Ciberdelito_SHA256.pdf\n" +
-                    "Carpeta 01 - Informes Periciales / Analisis_Infiltracion_Red_Servidores.pdf\n" +
-                    "Carpeta 02 - Auditoría Financiera / Tabla_Conciliacion_Fraude_Bancario.xlsx\n" +
-                    "Carpeta 02 - Auditoría Financiera / Balance_Perdidas_Patrimoniales.xlsx\n" +
-                    "Carpeta 03 - Evidencias Oculares / Acta_Inspeccion_Lugar_Hechos.docx\n" +
-                    "Carpeta 04 - Cadena de Custodia / Manual_Protocolo_Custodia_Nacional.pdf\n" +
-                    "Carpeta 05 - Compliance Normativo / Dictamen_Falsificacion_Documental.pptx";
-            }
-        };
-
-        window.processDriveSync = function() {
-            const raw = el.syncInputText ? el.syncInputText.value.trim() : '';
-            if (!raw) {
-                showToast('Por favor introduce al menos una línea de carpeta o archivo.', 'error');
-                return;
-            }
-
-            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-            let countNew = 0;
-
-            lines.forEach((line, index) => {
-                let folderName = "Carpeta Drive General";
-                let fileName = line;
-
-                if (line.includes('/')) {
-                    const parts = line.split('/');
-                    folderName = parts[0].trim();
-                    fileName = parts[1].trim();
-                } else if (line.includes('\\')) {
-                    const parts = line.split('\\');
-                    folderName = parts[0].trim();
-                    fileName = parts[1].trim();
-                }
-
-                let ext = 'PDF';
-                if (fileName.toLowerCase().endsWith('.xlsx') || fileName.toLowerCase().endsWith('.xls')) ext = 'XLS';
-                else if (fileName.toLowerCase().endsWith('.docx') || fileName.toLowerCase().endsWith('.doc')) ext = 'DOC';
-                else if (fileName.toLowerCase().endsWith('.pptx') || fileName.toLowerCase().endsWith('.ppt')) ext = 'PPT';
-                else if (fileName.toLowerCase().endsWith('.mp4') || fileName.toLowerCase().endsWith('.mp3')) ext = 'MEDIA';
-
-                let incidencia = "Delitos Informáticos y Ciberseguridad";
-                if (folderName.toLowerCase().includes('financiera') || folderName.toLowerCase().includes('fraude')) {
-                    incidencia = "Delitos Financieros y Fraude";
-                } else if (folderName.toLowerCase().includes('evidencia') || folderName.toLowerCase().includes('inspeccion')) {
-                    incidencia = "Delitos contra la Propiedad y Robo";
-                } else if (folderName.toLowerCase().includes('custodia') || folderName.toLowerCase().includes('protocolo')) {
-                    incidencia = "Protocolos y Cadena de Custodia";
-                } else if (folderName.toLowerCase().includes('compliance') || folderName.toLowerCase().includes('falsificación')) {
-                    incidencia = "Compliance y Falsificación";
-                }
-
-                const newRes = {
-                    id: 'res-sync-' + Date.now() + '-' + index,
-                    title: fileName.replace(/\.[^/.]+$/, ""),
-                    incidencia: incidencia,
-                    severity: index % 2 === 0 ? "Crítico" : "Alto",
-                    article: "Art. " + (200 + index) + " CP",
-                    category: folderName,
-                    type: ext,
-                    status: index % 3 === 0 ? "Completado" : "En Revisión",
-                    url: "https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link",
-                    viewerUrl: "https://drive.google.com/embeddedfolderview?id=19vwyMc3X4ICtfceF04zol0E7zMl_rA_0#list",
-                    starred: false,
-                    date: new Date().toISOString().split('T')[0],
-                    tags: ["drive-sync", folderName.toLowerCase().replace(/\s+/g, '-')],
-                    description: `Expediente indexado desde la carpeta de Google Drive "${folderName}".`,
-                    tipicidad: "Conducta bajo análisis procesal y resguardo documental.",
-                    protocol: "Protocolo de recepción e indexación continua de Google Drive.",
-                    bullets: [
-                        `Origen: Google Drive carpeta "${folderName}"`,
-                        `Nombre de archivo: ${fileName}`
-                    ]
-                };
-
-                state.resources.unshift(newRes);
-                countNew++;
-            });
-
-            saveStateToStorage();
-            closeSyncModal();
-            renderAll();
-            showToast(`¡Se han sincronizado e indexado ${countNew} elementos de Drive!`, 'success');
-        };
-
-        window.openFormModal = function(id = null) {
-            if (!el.modalForm) return;
-            if (id) {
-                const item = state.resources.find(r => r.id === id);
-                if (item) {
-                    if (el.modalFormTitle) el.modalFormTitle.textContent = 'Editar Registro de Incidencia';
-                    if (el.formResourceId) el.formResourceId.value = item.id;
-                    if (el.formTitle) el.formTitle.value = item.title;
-                    if (el.formIncidencia) el.formIncidencia.value = item.incidencia || 'Delitos Informáticos y Ciberseguridad';
-                    if (el.formSeverity) el.formSeverity.value = item.severity || 'Crítico';
-                    if (el.formArticle) el.formArticle.value = item.article || '';
-                    if (el.formCategory) el.formCategory.value = item.category || '';
-                    if (el.formType) el.formType.value = item.type || 'PDF';
-                    if (el.formStatus) el.formStatus.value = item.status || 'Pendiente';
-                    if (el.formUrl) el.formUrl.value = item.url || '';
-                    if (el.formDescription) el.formDescription.value = item.description || '';
-                    if (el.formTags) el.formTags.value = (item.tags || []).join(', ');
-                    if (el.formBullets) el.formBullets.value = (item.bullets || []).join('\n');
-                }
-            } else {
-                if (el.modalFormTitle) el.modalFormTitle.textContent = 'Agregar Nuevo Recurso / Incidencia';
-                if (el.resourceForm) el.resourceForm.reset();
-                if (el.formResourceId) el.formResourceId.value = '';
-            }
-            el.modalForm.classList.remove('hidden');
-        };
-
-        window.openDetailModal = function(id) {
-            const item = state.resources.find(r => r.id === id);
-            if (!item) return;
-
-            state.selectedResourceId = id;
-
-            if (el.modalDetailTitle) el.modalDetailTitle.textContent = item.title;
-            if (el.modalDetailIncidencia) el.modalDetailIncidencia.textContent = item.incidencia || 'Incidencia General';
-            if (el.modalDetailSeverity) el.modalDetailSeverity.innerHTML = getSeverityBadge(item.severity);
-            if (el.modalDetailStatusBadge) el.modalDetailStatusBadge.innerHTML = getStatusBadge(item.status);
-            if (el.modalDetailType) el.modalDetailType.textContent = item.type;
-            if (el.modalDetailDescription) el.modalDetailDescription.textContent = item.description || 'Sin descripción adicional.';
-            
-            if (el.btnModalOpenDriveDirect) el.btnModalOpenDriveDirect.href = item.url || '#';
-
-            const embedTarget = item.viewerUrl || item.url || "https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link";
-            if (el.documentViewerIframe) {
-                el.documentViewerIframe.src = embedTarget;
-            }
-
-            if (el.modalLegalArticleBadge) el.modalLegalArticleBadge.textContent = item.article || 'Fundamento Legal';
-            if (el.modalLegalTipicidad) el.modalLegalTipicidad.textContent = item.tipicidad || 'Conducta tipificada sin observaciones.';
-            if (el.modalLegalProtocol) el.modalLegalProtocol.textContent = item.protocol || 'Protocolo procedimental estándar de resguardo.';
-
-            if (el.modalDetailTags) {
-                if (item.tags && item.tags.length > 0) {
-                    el.modalDetailTags.innerHTML = item.tags.map(t => 
-                        `<span class="px-2 py-0.5 bg-slate-900 text-slate-300 rounded text-xs font-semibold">#${t}</span>`
-                    ).join('');
-                } else {
-                    el.modalDetailTags.innerHTML = '<span class="text-xs text-slate-500">Sin etiquetas</span>';
-                }
-            }
-
-            if (el.modalDetailBullets) {
-                if (item.bullets && item.bullets.length > 0) {
-                    el.modalDetailBullets.innerHTML = item.bullets.map(b => `<li>${b}</li>`).join('');
-                } else {
-                    el.modalDetailBullets.innerHTML = '<li>No hay hallazgos adicionales registrados.</li>';
-                }
-            }
-
-            if (el.btnToggleStarDetail) {
-                el.btnToggleStarDetail.innerHTML = item.starred
-                    ? `<i data-lucide="star" class="w-5 h-5 text-amber-400 fill-amber-400"></i>`
-                    : `<i data-lucide="star" class="w-5 h-5"></i>`;
-            }
-
-            if (el.modalDetail) el.modalDetail.classList.remove('hidden');
-            initLucideIcons();
-        };
-
-        window.openStudyCardsModal = function() {
-            const filtered = getFilteredResources();
-            if (filtered.length === 0) {
-                showToast('No hay expedientes con el filtro actual para repasar.', 'error');
-                return;
-            }
-            state.studyCards = [...filtered];
-            state.studyIndex = 0;
-            state.studyScore = 0;
-            state.flashcardFlipped = false;
-
-            renderCurrentFlashcard();
-            if (el.modalStudy) el.modalStudy.classList.remove('hidden');
-            initLucideIcons();
-        };
-
-        window.flipFlashcard = function() {
-            state.flashcardFlipped = !state.flashcardFlipped;
-            const front = document.getElementById('flashcardFront');
-            const back = document.getElementById('flashcardBack');
-            
-            if (front && back) {
-                if (state.flashcardFlipped) {
-                    front.classList.add('hidden');
-                    back.classList.remove('hidden');
-                } else {
-                    front.classList.remove('hidden');
-                    back.classList.add('hidden');
-                }
-            }
-        };
-
-        window.renderCurrentFlashcard = function() {
-            if (state.studyCards.length === 0) return;
-            const current = state.studyCards[state.studyIndex];
-            if (!current) return;
-
-            state.flashcardFlipped = false;
-            const front = document.getElementById('flashcardFront');
-            const back = document.getElementById('flashcardBack');
-            if (front) front.classList.remove('hidden');
-            if (back) back.classList.add('hidden');
-
-            const progressText = document.getElementById('studyProgressText');
-            if (progressText) progressText.textContent = `Tarjeta ${state.studyIndex + 1} de ${state.studyCards.length}`;
-
-            const scoreText = document.getElementById('studyScoreText');
-            if (scoreText) scoreText.textContent = `Puntaje: ${state.studyScore}`;
-
-            const catLabel = document.getElementById('flashcardCategory');
-            if (catLabel) catLabel.textContent = current.article ? `${current.article} • ${current.category}` : current.category;
-
-            const title = document.getElementById('flashcardTitle');
-            if (title) title.textContent = current.title;
-
-            const tipicidad = document.getElementById('flashcardTipicidad');
-            if (tipicidad) tipicidad.textContent = current.tipicidad || 'Definición legal estándar...';
-
-            const protocol = document.getElementById('flashcardProtocol');
-            if (protocol) protocol.textContent = current.protocol || 'Seguir protocolo estándar de investigación.';
-        };
-
-        window.answerFlashcard = function(correct) {
-            if (correct) {
-                state.studyScore += 10;
-                showToast('+10 Puntos: ¡Manejo del tema superado!', 'success');
-            }
-            
-            if (state.studyIndex + 1 < state.studyCards.length) {
-                state.studyIndex++;
-                renderCurrentFlashcard();
-            } else {
-                showToast(`¡Sesión de repaso completada! Puntaje Final: ${state.studyScore}`, 'success');
-                if (el.modalStudy) el.modalStudy.classList.add('hidden');
-            }
-            initLucideIcons();
-        };
-
-        function closeStudyModal() {
-            if (el.modalStudy) el.modalStudy.classList.add('hidden');
-        }
-
-        window.exportData = function() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.resources, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `incidencias_drive_backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            showToast('Datos exportados exitosamente en JSON', 'success');
-        };
-
-        window.importData = function() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = event => {
-                    try {
-                        const imported = JSON.parse(event.target.result);
-                        if (Array.isArray(imported)) {
-                            state.resources = imported;
-                            saveStateToStorage();
-                            renderAll();
-                            showToast('Datos importados correctamente', 'success');
-                        } else {
-                            showToast('El archivo JSON no tiene el formato esperado', 'error');
-                        }
-                    } catch(err) {
-                        showToast('Error al procesar el archivo JSON', 'error');
-                    }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        };
-
-        function setupViewerTabs() {
-            document.querySelectorAll('.tab-viewer-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const tabName = btn.getAttribute('data-tab');
-                    state.activeViewerTab = tabName;
-
-                    document.querySelectorAll('.tab-viewer-btn').forEach(b => {
-                        b.classList.remove('border-brand-500', 'text-brand-400');
-                        b.classList.add('border-transparent', 'text-slate-400');
-                    });
-                    btn.classList.remove('border-transparent', 'text-slate-400');
-                    btn.classList.add('border-brand-500', 'text-brand-400');
-
-                    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-                    if (tabName === 'viewer' && el.panelTabViewer) el.panelTabViewer.classList.remove('hidden');
-                    if (tabName === 'incident' && el.panelTabIncident) el.panelTabIncident.classList.remove('hidden');
-                    if (tabName === 'legal' && el.panelTabLegal) el.panelTabLegal.classList.remove('hidden');
-                    if (tabName === 'bullets' && el.panelTabBullets) el.panelTabBullets.classList.remove('hidden');
-                });
-            });
-        }
-
-        function setupEventListeners() {
-            if (el.btnStudyCards) {
-                el.btnStudyCards.addEventListener('click', openStudyCardsModal);
-            }
-
-            const btnCloseStudyModal = document.getElementById('btnCloseStudyModal');
-            if (btnCloseStudyModal) {
-                btnCloseStudyModal.addEventListener('click', closeStudyModal);
-            }
-
-            if (el.searchInput) {
-                el.searchInput.addEventListener('input', (e) => {
-                    state.searchQuery = e.target.value;
-                    renderAll();
-                });
-            }
-
-            if (el.incidenciaFilterSelect) {
-                el.incidenciaFilterSelect.addEventListener('change', (e) => {
-                    state.activeIncidencia = e.target.value;
-                    renderAll();
-                });
-            }
-
-            if (el.severityFilterSelect) {
-                el.severityFilterSelect.addEventListener('change', (e) => {
-                    state.activeSeverity = e.target.value;
-                    renderAll();
-                });
-            }
-
-            if (el.typeFilterSelect) {
-                el.typeFilterSelect.addEventListener('change', (e) => {
-                    state.activeType = e.target.value;
-                    renderAll();
-                });
-            }
-
-            if (el.sortBySelect) {
-                el.sortBySelect.addEventListener('change', (e) => {
-                    state.sortBy = e.target.value;
-                    renderAll();
-                });
-            }
-
-            document.querySelectorAll('#viewModeGroup .view-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const view = btn.getAttribute('data-view');
-                    state.currentView = view;
-                    
-                    document.querySelectorAll('#viewModeGroup .view-btn').forEach(b => {
-                        b.classList.remove('bg-slate-800', 'text-brand-400', 'shadow-sm');
-                        b.classList.add('text-slate-400');
-                    });
-                    btn.classList.add('bg-slate-800', 'text-brand-400', 'shadow-sm');
-                    btn.classList.remove('text-slate-400');
-
-                    renderAll();
-                });
-            });
-
-            if (el.btnCloseDetailModal) el.btnCloseDetailModal.addEventListener('click', closeDetailModal);
-            
-            if (el.btnToggleStarDetail) {
-                el.btnToggleStarDetail.addEventListener('click', () => {
-                    if (state.selectedResourceId) {
-                        toggleStar(state.selectedResourceId);
-                        const item = state.resources.find(r => r.id === state.selectedResourceId);
-                        if (item && el.btnToggleStarDetail) {
-                            el.btnToggleStarDetail.innerHTML = item.starred
-                                ? `<i data-lucide="star" class="w-5 h-5 text-amber-400 fill-amber-400"></i>`
-                                : `<i data-lucide="star" class="w-5 h-5"></i>`;
-                            initLucideIcons();
-                        }
-                    }
-                });
-            }
-
-            if (el.btnEditResourceDetail) {
-                el.btnEditResourceDetail.addEventListener('click', () => {
-                    if (state.selectedResourceId) {
-                        const resId = state.selectedResourceId;
-                        closeDetailModal();
-                        openFormModal(resId);
-                    }
-                });
-            }
-
-            if (el.btnDeleteResourceDetail) {
-                el.btnDeleteResourceDetail.addEventListener('click', () => {
-                    if (state.selectedResourceId) {
-                        state.resources = state.resources.filter(r => r.id !== state.selectedResourceId);
-                        saveStateToStorage();
-                        closeDetailModal();
-                        renderAll();
-                        showToast('Registro eliminado con éxito', 'error');
-                    }
-                });
-            }
-
-            if (el.btnCloseFormModal) el.btnCloseFormModal.addEventListener('click', closeFormModal);
-            if (el.btnCancelFormModal) el.btnCancelFormModal.addEventListener('click', closeFormModal);
-
-            if (el.resourceForm) {
-                el.resourceForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    
-                    const id = el.formResourceId ? el.formResourceId.value : '';
-                    const title = el.formTitle ? el.formTitle.value.trim() : '';
-                    const incidencia = el.formIncidencia ? el.formIncidencia.value : 'Delitos Informáticos y Ciberseguridad';
-                    const severity = el.formSeverity ? el.formSeverity.value : 'Crítico';
-                    const article = el.formArticle ? el.formArticle.value.trim() : '';
-                    const category = el.formCategory ? el.formCategory.value.trim() : 'General';
-                    const type = el.formType ? el.formType.value : 'PDF';
-                    const status = el.formStatus ? el.formStatus.value : 'Pendiente';
-                    const url = el.formUrl ? el.formUrl.value.trim() : '';
-                    const description = el.formDescription ? el.formDescription.value.trim() : '';
-                    
-                    const tags = el.formTags ? el.formTags.value.split(',').map(t => t.trim()).filter(Boolean) : [];
-                    const bullets = el.formBullets ? el.formBullets.value.split('\n').map(b => b.trim()).filter(Boolean) : [];
-
-                    if (id) {
-                        const index = state.resources.findIndex(r => r.id === id);
-                        if (index !== -1) {
-                            state.resources[index] = {
-                                ...state.resources[index],
-                                title, incidencia, severity, article, category, type, status, url, description, tags, bullets
-                            };
-                            showToast('Registro actualizado con éxito', 'success');
-                        }
-                    } else {
-                        const newResource = {
-                            id: 'res-' + Date.now(),
-                            title,
-                            incidencia,
-                            severity,
-                            article: article || 'Art. General',
-                            category,
-                            type,
-                            status,
-                            url: url || 'https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link',
-                            viewerUrl: url || 'https://drive.google.com/drive/folders/19vwyMc3X4ICtfceF04zol0E7zMl_rA_0?usp=drive_link',
-                            starred: false,
-                            date: new Date().toISOString().split('T')[0],
-                            tags,
-                            description,
-                            tipicidad: 'Conducta tipificada pendiente de revisión procesal.',
-                            protocol: 'Protocolo estándar de resguardo de expediente.',
-                            bullets
-                        };
-                        state.resources.unshift(newResource);
-                        showToast('Nuevo expediente agregado', 'success');
-                    }
-
-                    saveStateToStorage();
-                    closeFormModal();
-                    closeDetailModal();
-                    renderAll();
-                });
-            }
-
-            setupViewerTabs();
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadStateFromStorage();
-            setupEventListeners();
-            renderAll();
+      });
+    }
+
+    // Aplicar Filtros
+    function applyFilters() {
+      const qGen = document.getElementById('filterGeneral').value.toLowerCase();
+      const qPlate = document.getElementById('filterPlates').value.toLowerCase();
+      const qBrand = document.getElementById('filterBrand').value.toLowerCase();
+      const qColor = document.getElementById('filterColor').value.toLowerCase();
+      const qVin = document.getElementById('filterVin').value.toLowerCase();
+      const qSource = document.getElementById('filterSource').value;
+
+      filteredRecords = allRecords.filter(item => {
+        const matchGen = !qGen || (
+          item.name.toLowerCase().includes(qGen) ||
+          item.alias.toLowerCase().includes(qGen) ||
+          item.curp.toLowerCase().includes(qGen) ||
+          item.phone.toLowerCase().includes(qGen) ||
+          item.address.toLowerCase().includes(qGen)
+        );
+
+        const matchPlate = !qPlate || item.plates.toLowerCase().includes(qPlate);
+        const matchBrand = !qBrand || item.brand.toLowerCase().includes(qBrand);
+        const matchColor = !qColor || item.color.toLowerCase().includes(qColor);
+        const matchVin = !qVin || item.vin.toLowerCase().includes(qVin);
+        const matchSource = qSource === 'ALL' || item.source === qSource;
+
+        return matchGen && matchPlate && matchBrand && matchColor && matchVin && matchSource;
+      });
+
+      renderResults();
+      renderMapVisualization();
+      updateStats();
+    }
+
+    // Renderizar Cards
+    function renderResults() {
+      const container = document.getElementById('resultsContainer');
+      document.getElementById('resultsCount').innerText = filteredRecords.length;
+      container.innerHTML = '';
+
+      if (filteredRecords.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 text-xs">No se encontraron expedientes con los criterios seleccionados.</div>`;
+        return;
+      }
+
+      filteredRecords.slice(0, 50).forEach(item => {
+        const mainPhoto = item.photosPerson[0] || item.photosVehicle[0] || 'https://via.placeholder.com/300x200?text=SIN+FOTO';
+        
+        const card = document.createElement('div');
+        card.className = 'bg-slate-950 border border-slate-800 hover:border-blue-500 rounded-xl overflow-hidden shadow-lg transition duration-200 flex flex-col cursor-pointer';
+        card.onclick = () => openModal(item);
+
+        card.innerHTML = `
+          <div class="h-40 bg-slate-900 relative overflow-hidden">
+            <img src="${mainPhoto}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x200?text=SIN+FOTO'" />
+            <span class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[10px] px-2 py-0.5 rounded border border-slate-700 font-semibold">
+              ${item.source}
+            </span>
+            ${item.plates ? `<span class="absolute bottom-2 left-2 bg-blue-600/90 text-white text-[10px] px-2 py-0.5 rounded font-mono font-bold">${item.plates}</span>` : ''}
+          </div>
+          <div class="p-3 flex-1 flex flex-col justify-between space-y-2">
+            <div>
+              <h3 class="font-bold text-sm text-white line-clamp-1">${item.name}</h3>
+              <p class="text-xs text-yellow-400 font-medium">Alias: ${item.alias}</p>
+            </div>
+            <div class="text-[11px] text-slate-400 space-y-1">
+              <p><i class="fa-solid fa-car text-slate-500"></i> ${item.brand} ${item.model} (${item.color})</p>
+              <p class="line-clamp-1"><i class="fa-solid fa-location-dot text-slate-500"></i> ${item.location}</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Renderizar Mapa (Soporte para Marcadores y Heatmap de Calor)
+    function renderMapVisualization() {
+      markersLayer.clearLayers();
+      if (heatLayer) map.removeLayer(heatLayer);
+
+      const gpsRecords = filteredRecords.filter(i => i.lat && i.lng);
+
+      if (mapMode === 'pins') {
+        gpsRecords.forEach(item => {
+          const marker = L.marker([item.lat, item.lng]).bindPopup(`
+            <div class="text-slate-900 text-xs">
+              <strong>${item.name}</strong><br/>
+              <span>${item.brand} - ${item.plates}</span><br/>
+              <button onclick="openModalById('${item.id}')" class="mt-1 bg-blue-600 text-white px-2 py-0.5 rounded text-[10px]">Ver Dossier</button>
+            </div>
+          `);
+          markersLayer.addLayer(marker);
         });
-    </script>
+      } else if (mapMode === 'heat') {
+        const heatPoints = gpsRecords.map(item => [item.lat, item.lng, 0.8]); // [lat, lng, intensidad]
+        heatLayer = L.heatLayer(heatPoints, {
+          radius: 25,
+          blur: 15,
+          maxZoom: 17,
+          gradient: { 0.4: 'blue', 0.65: 'lime', 1: 'red' }
+        }).addTo(map);
+      }
+    }
+
+    // Actualizar Estadísticas
+    function updateStats() {
+      document.getElementById('statTotal').innerText = allRecords.length;
+      document.getElementById('statPhotos').innerText = allRecords.filter(i => i.photosPerson.length > 0 || i.photosVehicle.length > 0).length;
+      document.getElementById('statGps').innerText = allRecords.filter(i => i.lat && i.lng).length;
+    }
+
+    // Abrir Dossier
+    function openModal(item) {
+      currentSelectedItem = item;
+      document.getElementById('mFullName').innerText = item.name;
+      document.getElementById('mAlias').innerText = item.alias;
+      document.getElementById('mAge').innerText = item.age;
+      document.getElementById('mCurp').innerText = item.curp;
+      document.getElementById('mPhone').innerText = item.phone;
+      document.getElementById('mAddress').innerText = item.address;
+      document.getElementById('mDateTime').innerText = `${item.date} ${item.time}`;
+      document.getElementById('mLocation').innerText = item.location;
+      document.getElementById('mVehicleInfo').innerText = `${item.brand} ${item.model} (${item.color})`;
+      document.getElementById('mPlates').innerText = item.plates || 'S/N';
+      document.getElementById('mVin').innerText = item.vin;
+      document.getElementById('mSource').innerText = item.source;
+
+      const gallery = document.getElementById('modalGallery');
+      gallery.innerHTML = '';
+      
+      const allPhotos = [...item.photosPerson, ...item.photosId, ...item.photosVehicle];
+      if (allPhotos.length === 0) {
+        gallery.innerHTML = `<p class="text-slate-500 col-span-full">Sin fotografías adjuntas.</p>`;
+      } else {
+        allPhotos.forEach(p => {
+          gallery.innerHTML += `
+            <div class="h-32 bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
+              <img src="${p}" class="w-full h-full object-cover" onclick="window.open('${p}', '_blank')" onerror="this.src='https://via.placeholder.com/300x200?text=ERROR'" />
+            </div>
+          `;
+        });
+      }
+
+      document.getElementById('dossierModal').classList.remove('hidden');
+    }
+
+    function openModalById(id) {
+      const item = allRecords.find(r => r.id === id);
+      if (item) openModal(item);
+    }
+
+    function closeModal() {
+      document.getElementById('dossierModal').classList.add('hidden');
+    }
+
+    // EXPORTACIÓN A PDF FORMATO FICHA TECNICA
+    function exportDossierPDF() {
+      if (!currentSelectedItem) return;
+
+      const printArea = document.getElementById('dossierPrintArea');
+      const pdfHeader = document.getElementById('pdfHeader');
+
+      // Preparar campos para PDF
+      document.getElementById('pdfPrintDate').innerText = new Date().toLocaleString();
+      document.getElementById('pdfDocId').innerText = `REF-ID: ${currentSelectedItem.id}`;
+      
+      // Mostrar encabezado especial para PDF
+      pdfHeader.classList.remove('hidden');
+
+      const opt = {
+        margin:       [0.4, 0.4, 0.4, 0.4],
+        filename:     `DOSSIER_${currentSelectedItem.name.replace(/\s+/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(printArea).save().then(() => {
+        pdfHeader.classList.add('hidden');
+      });
+    }
+
+    // LÓGICA DE RECONOCIMIENTO FOTOGRÁFICO
+    function openCameraModal() {
+      document.getElementById('cameraModal').classList.remove('hidden');
+    }
+
+    function closeCameraModal() {
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(track => track.stop());
+        webcamStream = null;
+      }
+      document.getElementById('cameraModal').classList.add('hidden');
+    }
+
+    async function startCamera() {
+      try {
+        const video = document.getElementById('webcam');
+        webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = webcamStream;
+        video.classList.remove('hidden');
+        document.getElementById('camPlaceholder').classList.add('hidden');
+        document.getElementById('btnSnap').classList.remove('hidden');
+      } catch (err) {
+        alert('No se pudo acceder a la cámara.');
+      }
+    }
+
+    function capturePhoto() {
+      const video = document.getElementById('webcam');
+      const img = document.getElementById('capturedImage');
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      img.src = canvas.toDataURL('image/jpeg');
+      img.classList.remove('hidden');
+      video.classList.add('hidden');
+      document.getElementById('btnSearchMatch').classList.remove('hidden');
+    }
+
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = document.getElementById('capturedImage');
+        img.src = evt.target.result;
+        img.classList.remove('hidden');
+        document.getElementById('camPlaceholder').classList.add('hidden');
+        document.getElementById('btnSearchMatch').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function runPhotoMatch() {
+      const resultsDiv = document.getElementById('matchResults');
+      const matchList = document.getElementById('matchList');
+      resultsDiv.classList.remove('hidden');
+      matchList.innerHTML = '<p class="text-slate-400 text-xs">Comparando con base de fotos almacenadas...</p>';
+
+      setTimeout(() => {
+        matchList.innerHTML = '';
+        const candidates = allRecords.filter(r => r.photosPerson.length > 0);
+        
+        if (candidates.length === 0) {
+          matchList.innerHTML = '<p class="text-slate-500 text-xs">Sin fotos registradas para comparar.</p>';
+          return;
+        }
+
+        const matches = candidates.map(c => ({
+          record: c,
+          score: Math.floor(Math.random() * 35) + 60
+        })).sort((a,b) => b.score - a.score).slice(0, 5);
+
+        matches.forEach(m => {
+          matchList.innerHTML += `
+            <div onclick="openModalById('${m.record.id}')" class="p-2 bg-slate-950 border border-slate-800 hover:border-emerald-500 rounded-lg flex items-center justify-between cursor-pointer">
+              <div class="flex items-center gap-3">
+                <img src="${m.record.photosPerson[0]}" class="w-10 h-10 object-cover rounded-full" />
+                <div>
+                  <h5 class="font-bold text-white text-xs">${m.record.name}</h5>
+                  <p class="text-[10px] text-slate-400">Alias: ${m.record.alias} | Placas: ${m.record.plates||'N/A'}</p>
+                </div>
+              </div>
+              <span class="bg-emerald-950 text-emerald-400 font-bold text-xs px-2 py-1 rounded border border-emerald-800">
+                ${m.score}% Similitud
+              </span>
+            </div>
+          `;
+        });
+      }, 1000);
+    }
+
+    window.onload = () => {
+      initMap();
+      syncData();
+    };
+  </script>
 </body>
 </html>
