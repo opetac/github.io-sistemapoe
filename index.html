@@ -68,7 +68,7 @@
     <!-- BACKDROP PARA MÓVIL -->
     <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden lg:hidden backdrop-blur-sm"></div>
 
-    <!-- SIDEBAR / FILTROS (Drapeau Móvil + Barra Lateral en Desktop) -->
+    <!-- SIDEBAR / FILTROS -->
     <aside id="sidebarDrawer" class="fixed lg:relative inset-y-0 left-0 z-40 w-80 bg-slate-950 border-r border-slate-800 flex flex-col p-4 custom-scrollbar overflow-y-auto space-y-4 transition-transform duration-300 -translate-x-full lg:translate-x-0 shrink-0">
       
       <div class="flex justify-between items-center lg:hidden border-b border-slate-800 pb-2">
@@ -81,7 +81,7 @@
         <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Búsqueda General (Persona / Alias / CURP)</label>
         <div class="relative">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i>
-          <input type="text" id="filterGeneral" oninput="debouncedApplyFilters()" placeholder="Nombre, alias, CURP, teléfono..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+          <input type="text" id="filterGeneral" oninput="debouncedApplyFilters()" placeholder="Nombre, alias, CURP, motivo, teléfono..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
         </div>
       </div>
 
@@ -146,7 +146,7 @@
     <!-- MAIN DASHBOARD CONTENT -->
     <main class="flex-1 flex flex-col overflow-hidden bg-slate-900">
       
-      <!-- CONTROLES DE PESTAÑA PARA MÓVIL (MÓVIL ONLY) -->
+      <!-- CONTROLES DE PESTAÑA PARA MÓVIL -->
       <div class="flex lg:hidden bg-slate-950 border-b border-slate-800 p-1 shrink-0">
         <button onclick="switchMobileTab('cards')" id="tabBtnCards" class="flex-1 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white text-center">
           <i class="fa-solid fa-users"></i> Resultados (<span id="mobileCount">0</span>)
@@ -179,7 +179,6 @@
               <i class="fa-solid fa-map-location-dot text-red-500"></i> Georreferenciación
             </h2>
             
-            <!-- Conmutador: Puntos vs Mapa de Calor -->
             <div class="flex bg-slate-900 p-0.5 rounded-lg border border-slate-800 text-[11px]">
               <button onclick="setMapMode('markers')" id="btnMapMarkers" class="px-2.5 py-1 rounded-md font-semibold bg-blue-600 text-white transition">
                 <i class="fa-solid fa-location-dot"></i> Puntos
@@ -224,14 +223,25 @@
           <div id="modalGallery" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
         </div>
 
+        <!-- MOTIVO Y ESTATUS DESTACADO -->
+        <div class="bg-amber-950/40 border border-amber-800/60 p-3 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div>
+            <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Motivo de Detención / Abordamiento</span>
+            <p id="mMotive" class="text-sm font-bold text-amber-200 mt-0.5"></p>
+          </div>
+          <span id="mSourceBadge" class="bg-slate-800 text-slate-200 text-[10px] px-2.5 py-1 rounded-md font-semibold border border-slate-700"></span>
+        </div>
+
         <!-- Detalles Personales & Evento -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950 p-3.5 sm:p-4 rounded-xl border border-slate-800">
           <div class="space-y-2">
             <h4 class="text-blue-400 font-bold uppercase border-b border-slate-800 pb-1">Datos Personales</h4>
-            <p><strong class="text-slate-400">Nombre Completo:</strong> <span id="mFullName" class="text-slate-200"></span></p>
-            <p><strong class="text-slate-400">Alias:</strong> <span id="mAlias" class="text-yellow-400 font-semibold"></span></p>
+            <p><strong class="text-slate-400">Nombre Completo:</strong> <span id="mFullName" class="text-slate-200 font-semibold"></span></p>
+            <p><strong class="text-slate-400">Alias / Apodo:</strong> <span id="mAlias" class="text-yellow-400 font-semibold"></span></p>
             <p><strong class="text-slate-400">Edad / Nacimiento:</strong> <span id="mAge"></span></p>
+            <p><strong class="text-slate-400">Sexo / Origen:</strong> <span id="mGenderOrigin"></span></p>
             <p><strong class="text-slate-400">CURP:</strong> <span id="mCurp" class="font-mono"></span></p>
+            <p><strong class="text-slate-400">Ocupación / Oficio:</strong> <span id="mOccupation"></span></p>
             <p><strong class="text-slate-400">Teléfono:</strong> <span id="mPhone"></span></p>
             <p><strong class="text-slate-400">Domicilio:</strong> <span id="mAddress"></span></p>
           </div>
@@ -239,11 +249,12 @@
           <div class="space-y-2">
             <h4 class="text-blue-400 font-bold uppercase border-b border-slate-800 pb-1">Datos del Evento / Vehículo</h4>
             <p><strong class="text-slate-400">Fecha / Hora:</strong> <span id="mDateTime"></span></p>
-            <p><strong class="text-slate-400">Lugar / Sector:</strong> <span id="mLocation"></span></p>
+            <p><strong class="text-slate-400">Lugar / Dirección:</strong> <span id="mLocation"></span></p>
+            <p><strong class="text-slate-400">Zona / Sector:</strong> <span id="mZoneSector"></span></p>
+            <p><strong class="text-slate-400">Unidad / CRP Capturista:</strong> <span id="mUnitCrp"></span></p>
             <p><strong class="text-slate-400">Vehículo:</strong> <span id="mVehicleInfo"></span></p>
             <p><strong class="text-slate-400">Placas:</strong> <span id="mPlates" class="bg-slate-800 px-2 py-0.5 rounded font-mono text-white"></span></p>
             <p><strong class="text-slate-400">NIV / Serie:</strong> <span id="mVin" class="font-mono"></span></p>
-            <p><strong class="text-slate-400">Fuente:</strong> <span id="mSource" class="text-emerald-400 font-semibold"></span></p>
           </div>
         </div>
 
@@ -251,7 +262,7 @@
     </div>
   </div>
 
-  <!-- MODAL BÚSQUEDA POR FOTO CON SOPORTE MÓVIL NATIVO -->
+  <!-- MODAL BÚSQUEDA POR FOTO -->
   <div id="cameraModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-4 sm:p-6 flex flex-col space-y-4 shadow-2xl max-h-[95dvh] overflow-y-auto custom-scrollbar">
       <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
@@ -274,13 +285,11 @@
         </div>
 
         <div class="flex flex-col space-y-2.5">
-          <!-- Botón de Cámara Nativa del Celular -->
           <label class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2.5 px-3 rounded-lg font-semibold transition cursor-pointer text-center flex items-center justify-center gap-2 shadow">
             <i class="fa-solid fa-camera"></i> Tomar Foto con Cámara Nativa
             <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleFileUpload(event)" />
           </label>
 
-          <!-- Botón de Abrir Visor WebRTC -->
           <button onclick="startCamera()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs py-2.5 px-3 rounded-lg font-medium transition flex items-center justify-center gap-2">
             <i class="fa-solid fa-video"></i> Activar Visor Web
           </button>
@@ -289,7 +298,6 @@
             <i class="fa-solid fa-circle-dot"></i> Capturar Fotograma
           </button>
 
-          <!-- Subir Imagen desde Archivos/Galería -->
           <label class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-2.5 px-3 rounded-lg font-medium transition cursor-pointer text-center border border-slate-700 flex items-center justify-center gap-2">
             <i class="fa-solid fa-image"></i> Seleccionar de Galería
             <input type="file" accept="image/*" class="hidden" onchange="handleFileUpload(event)" />
@@ -308,10 +316,8 @@
     </div>
   </div>
 
-  <!-- SCRIPT LOGIC MÓVIL + DESK -->
+  <!-- SCRIPT LOGIC -->
   <script>
-    const MAP_API_KEY = 'cb1_3yax_1_62a7917a038a98cc4759f31f';
-
     const SHEET_CONFIGS = [
       { id: '1EgudaTwmNvHi8eKPMQbCz8eD6fKS1GdrIuIp_R-xVfk', gid: '501282295', source: 'Abordamientos' },
       { id: '1rl28kCEfkpu9G7oly87NHw4_XGCsjWhSssMxa6Et9SY', gid: '1225183609', source: 'Detenciones' },
@@ -337,7 +343,6 @@
     }
     const debouncedApplyFilters = debounce(applyFilters, 150);
 
-    // Gestor de Interfaz Móvil
     function toggleMobileSidebar() {
       const sidebar = document.getElementById('sidebarDrawer');
       const backdrop = document.getElementById('sidebarBackdrop');
@@ -374,13 +379,12 @@
       }
     }
 
-    // Inicializar Mapa
     function initMap() {
       map = L.map('map', { preferCanvas: true }).setView([25.6866, -100.3161], 11);
       
-      const tileUrl = `https://maps.geoapify.com/v1/tile/dark-matter/{z}/{x}/{y}.png?apiKey=${MAP_API_KEY}`;
+      const tileUrl = 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_3yax_1_62a7917a038a98cc4759f31f';
       L.tileLayer(tileUrl, {
-        attribution: '&copy; Geoapify &copy; OpenStreetMap',
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
         maxZoom: 19
       }).addTo(map);
 
@@ -404,7 +408,6 @@
       return parsed;
     }
 
-    // Descarga en paralelo ultra rápida
     async function syncData() {
       const icon = document.getElementById('syncIcon');
       icon.classList.add('fa-spin');
@@ -444,6 +447,9 @@
         const photosId = parseDriveImageUrls(r['GRAFICA DE IDENTIFICACION']);
         const photosVehicle = parseDriveImageUrls(r['GRAFICA DE VEHICULO'] || r['IMAGEN']);
 
+        // Extraer Motivo / Razón de detención o abordamiento
+        const detentionReason = r['TIPO DE DETENCION'] || r['Resultado de abordamiento'] || r['ENTREVISTA'] || r['OPERATIVO'] || 'Inspección / Abordamiento de Rutina';
+
         let lat = parseFloat(r['LATITUD'] || r['LAT']);
         let lng = parseFloat(r['LONGITUD'] || r['LNG']);
         if (isNaN(lat) && r['COORDENADAS DE UBICACION']) {
@@ -454,16 +460,26 @@
           }
         }
 
+        const zone = r['ZONA DE DETENCIÓN'] || r['ZONA DE ABORDAMIENTO'] || '';
+        const sector = r['SECTOR DE DETENCIÓN'] || r['SECTOR'] || '';
+        const zoneSector = (zone || sector) ? `${zone} ${sector ? 'Sector: ' + sector : ''}`.trim() : 'N/A';
+
         allRecords.push({
           id: `${source}-${idx}-${Math.random().toString(36).substring(2,7)}`,
           source: source,
           name: name || 'NO REGISTRADO',
           alias: r['ALIAS'] || r['ALIA'] || 'N/A',
           age: r['EDAD'] || r['EDAD DEL DETENIDO'] || 'N/A',
+          gender: r['SEXO'] || 'N/A',
+          origin: r['ORIGEN'] || r['ORIGINARIO'] || r['NACIONALIDAD'] || 'N/A',
           curp: r['CURP'] || 'N/A',
+          occupation: r['OCUPACION Y/O OFICIO'] || r['EMPRESA Y/O LUGAR DE TRABAJO'] || 'N/A',
           phone: r['TELEFONO'] || r['TEL'] || 'N/A',
           address: r['DOMICILIO'] || r['DOMICILIO DEL DETENIDO'] || `${r['CALLE']||''} ${r['COLONIA']||''}`.trim() || 'N/A',
           location: r['LUGAR DE ABORDAMIENTO'] || r['LUGAR DE DETENCIÓN'] || r['COLONIA'] || 'N/A',
+          detentionReason: detentionReason,
+          zoneSector: zoneSector,
+          unitCrp: r['NUMERO DE CRP QUE REALIZA EL ABORDAMIENTO'] || r['NOMINA DE CAPTURISTA'] || 'N/A',
           date: r['FECHA'] || r['FECHA DE DETENCIÓN'] || r['Marca temporal'] || 'N/A',
           time: r['HORA'] || r['HORA DE DETENCIÓN'] || '',
           plates: (r['PLACAS'] || '').toUpperCase().trim(),
@@ -494,6 +510,7 @@
           item.name.toLowerCase().includes(qGen) ||
           item.alias.toLowerCase().includes(qGen) ||
           item.curp.toLowerCase().includes(qGen) ||
+          item.detentionReason.toLowerCase().includes(qGen) ||
           item.phone.toLowerCase().includes(qGen) ||
           item.address.toLowerCase().includes(qGen)
         );
@@ -543,8 +560,18 @@
           <div class="p-3 flex-1 flex flex-col justify-between space-y-2">
             <div>
               <h3 class="font-bold text-xs sm:text-sm text-white line-clamp-1">${item.name}</h3>
-              <p class="text-[11px] text-yellow-400 font-medium">Alias: ${item.alias}</p>
+              <div class="flex items-center justify-between mt-0.5">
+                <p class="text-[11px] text-yellow-400 font-medium">Alias: ${item.alias}</p>
+                <span class="text-[10px] text-slate-400">Edad: ${item.age}</span>
+              </div>
             </div>
+
+            <!-- Motivo de Detención o Abordamiento -->
+            <div class="bg-amber-950/30 border border-amber-800/40 p-1.5 rounded-lg text-[10px]">
+              <span class="text-amber-400 font-bold block">Motivo / Evento:</span>
+              <p class="text-slate-200 line-clamp-1">${item.detentionReason}</p>
+            </div>
+
             <div class="text-[11px] text-slate-400 space-y-0.5">
               <p><i class="fa-solid fa-car text-slate-500"></i> ${item.brand} ${item.model} (${item.color})</p>
               <p class="line-clamp-1"><i class="fa-solid fa-location-dot text-slate-500"></i> ${item.location}</p>
@@ -593,6 +620,7 @@
             }).bindPopup(`
               <div class="text-slate-900 text-xs">
                 <strong>${item.name}</strong><br/>
+                <span class="text-red-700 font-semibold">${item.detentionReason}</span><br/>
                 <span>${item.brand} - ${item.plates}</span><br/>
                 <button onclick="openModalById('${item.id}')" class="mt-1 bg-blue-600 text-white px-2 py-0.5 rounded text-[10px]">Ver Dossier</button>
               </div>
@@ -620,15 +648,20 @@
       document.getElementById('mFullName').innerText = item.name;
       document.getElementById('mAlias').innerText = item.alias;
       document.getElementById('mAge').innerText = item.age;
+      document.getElementById('mGenderOrigin').innerText = `${item.gender} / ${item.origin}`;
       document.getElementById('mCurp').innerText = item.curp;
+      document.getElementById('mOccupation').innerText = item.occupation;
       document.getElementById('mPhone').innerText = item.phone;
       document.getElementById('mAddress').innerText = item.address;
+      document.getElementById('mMotive').innerText = item.detentionReason;
+      document.getElementById('mSourceBadge').innerText = item.source;
       document.getElementById('mDateTime').innerText = `${item.date} ${item.time}`;
       document.getElementById('mLocation').innerText = item.location;
+      document.getElementById('mZoneSector').innerText = item.zoneSector;
+      document.getElementById('mUnitCrp').innerText = item.unitCrp;
       document.getElementById('mVehicleInfo').innerText = `${item.brand} ${item.model} (${item.color})`;
       document.getElementById('mPlates').innerText = item.plates || 'S/N';
       document.getElementById('mVin').innerText = item.vin;
-      document.getElementById('mSource').innerText = item.source;
 
       const gallery = document.getElementById('modalGallery');
       gallery.innerHTML = '';
@@ -689,7 +722,6 @@
     async function startCamera() {
       try {
         const video = document.getElementById('webcam');
-        // Usar cámara trasera en dispositivos móviles si existe
         webcamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
         video.srcObject = webcamStream;
         video.classList.remove('hidden');
@@ -754,7 +786,7 @@
                 <img src="${m.record.photosPerson[0]}" loading="lazy" class="w-9 h-9 object-cover rounded-full" />
                 <div>
                   <h5 class="font-bold text-white text-xs">${m.record.name}</h5>
-                  <p class="text-[10px] text-slate-400">Alias: ${m.record.alias} | Placas: ${m.record.plates||'N/A'}</p>
+                  <p class="text-[10px] text-amber-400">${m.record.detentionReason}</p>
                 </div>
               </div>
               <span class="bg-emerald-950 text-emerald-400 font-bold text-xs px-2 py-1 rounded border border-emerald-800">
