@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistema de Búsqueda e Inteligencia Operativa</title>
+  <title>Sistema Integrado de Búsqueda e Inteligencia Operativa</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -14,14 +14,13 @@
   <!-- Leaflet CSS & JS (Mapa Interactivo) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
   <!-- Leaflet Heatmap Plugin -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
   
   <!-- PapaParse para CSVs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
-  <!-- html2pdf.js para Exportación de Dossiers a PDF -->
+  <!-- html2pdf.js para Exportación a PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
@@ -41,7 +40,7 @@
       </div>
       <div>
         <h1 class="font-bold text-lg leading-tight tracking-wide text-white">SISTEMA INTEGRADO DE BÚSQUEDA Y DOSSIERS</h1>
-        <p class="text-xs text-slate-400">Inteligencia Operativa, Heatmaps & Generación de Reportes PDF</p>
+        <p class="text-xs text-slate-400">Inteligencia Operativa & Reconocimiento Multifuente</p>
       </div>
     </div>
     
@@ -66,7 +65,7 @@
         <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Búsqueda General (Persona / Alias / CURP)</label>
         <div class="relative">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i>
-          <input type="text" id="filterGeneral" oninput="applyFilters()" placeholder="Nombre, alias, CURP, teléfono..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+          <input type="text" id="filterGeneral" oninput="debouncedApplyFilters()" placeholder="Nombre, alias, CURP, teléfono..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
         </div>
       </div>
 
@@ -78,23 +77,23 @@
         
         <div>
           <label class="block text-[11px] text-slate-400">Placas</label>
-          <input type="text" id="filterPlates" oninput="applyFilters()" placeholder="ej. TBP078B, HAW357J" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+          <input type="text" id="filterPlates" oninput="debouncedApplyFilters()" placeholder="ej. TBP078B, HAW357J" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-[11px] text-slate-400">Marca</label>
-            <input type="text" id="filterBrand" oninput="applyFilters()" placeholder="Nissan, Ford..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+            <input type="text" id="filterBrand" oninput="debouncedApplyFilters()" placeholder="Nissan, Ford..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
           </div>
           <div>
             <label class="block text-[11px] text-slate-400">Color</label>
-            <input type="text" id="filterColor" oninput="applyFilters()" placeholder="Blanco, Negro..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+            <input type="text" id="filterColor" oninput="debouncedApplyFilters()" placeholder="Blanco, Negro..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
           </div>
         </div>
 
         <div>
           <label class="block text-[11px] text-slate-400">Número de Serie / VIN</label>
-          <input type="text" id="filterVin" oninput="applyFilters()" placeholder="NIV / Serie..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+          <input type="text" id="filterVin" oninput="debouncedApplyFilters()" placeholder="NIV / Serie..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
         </div>
       </div>
 
@@ -131,7 +130,7 @@
     <!-- MAIN DASHBOARD CONTENT -->
     <main class="flex-1 flex flex-col overflow-hidden bg-slate-900">
       
-      <!-- VISTA DIVIDIDA: GALERÍA DE RESULTADOS Y MAPA -->
+      <!-- VISTA DIVIDIDA: MAPA Y RESULTADOS -->
       <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
         
         <!-- CARDS / GALERÍA DE RESULTADOS -->
@@ -147,42 +146,41 @@
           </div>
         </section>
 
-        <!-- MAPA DE GEOLOCALIZACIÓN Y MAPAS DE CALOR -->
+        <!-- MAPA DE GEOLOCALIZACIÓN Y HEATMAP -->
         <section class="w-full lg:w-[480px] border-l border-slate-800 bg-slate-950 flex flex-col p-4">
-          <div class="flex justify-between items-center mb-3">
+          <div class="flex justify-between items-center mb-2">
             <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
               <i class="fa-solid fa-map-location-dot text-red-500"></i> Georreferenciación
             </h2>
             
-            <!-- Selector Modo Mapa (Puntos vs Heatmap) -->
-            <div class="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-1 text-[11px]">
-              <button id="btnMapPins" onclick="setMapMode('pins')" class="px-2 py-1 rounded bg-blue-600 text-white font-medium transition flex items-center gap-1">
+            <!-- Conmutador de Capa: Puntos vs Mapa de Calor -->
+            <div class="flex bg-slate-900 p-0.5 rounded-lg border border-slate-800 text-[11px]">
+              <button onclick="setMapMode('markers')" id="btnMapMarkers" class="px-2.5 py-1 rounded-md font-semibold bg-blue-600 text-white transition">
                 <i class="fa-solid fa-location-dot"></i> Puntos
               </button>
-              <button id="btnMapHeat" onclick="setMapMode('heat')" class="px-2 py-1 rounded text-slate-400 hover:text-white font-medium transition flex items-center gap-1">
-                <i class="fa-solid fa-fire"></i> Mapa de Calor
+              <button onclick="setMapMode('heatmap')" id="btnMapHeatmap" class="px-2.5 py-1 rounded-md font-semibold text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-fire text-amber-500"></i> Mapa Calor
               </button>
             </div>
           </div>
-
-          <div id="map" class="w-full flex-1 rounded-xl border border-slate-800 overflow-hidden shadow-inner"></div>
+          
+          <div id="map" class="w-full flex-1 rounded-xl border border-slate-800 overflow-hidden shadow-inner z-0"></div>
         </section>
 
       </div>
     </main>
   </div>
 
-  <!-- MODAL DE DETALLE DEL EXPEDIENTE (DOSSIER) CON EXPORTACIÓN A PDF -->
+  <!-- MODAL DE DETALLE DEL EXPEDIENTE (DOSSIER) CON EXPORTACIÓN PDF -->
   <div id="dossierModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-      
-      <!-- Modal Header -->
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
       <div class="bg-slate-950 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
-        <h3 class="font-bold text-lg text-white flex items-center gap-2">
-          <i class="fa-solid fa-id-card text-blue-500"></i> Dossier de Inteligencia
+        <h3 class="font-bold text-lg text-white flex items-center gap-2" id="modalName">
+          <i class="fa-solid fa-id-card text-blue-500"></i> Expediente Operativo
         </h3>
-        <div class="flex items-center space-x-3">
-          <button onclick="exportDossierPDF()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+        <div class="flex items-center gap-3">
+          <!-- Botón Exportar PDF -->
+          <button onclick="exportDossierToPDF()" class="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-2 shadow">
             <i class="fa-solid fa-file-pdf"></i> Exportar a PDF
           </button>
           <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl">
@@ -191,33 +189,20 @@
         </div>
       </div>
       
-      <!-- Modal Content (Area exportable a PDF) -->
-      <div id="dossierPrintArea" class="p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1 text-xs bg-slate-900 text-slate-100">
+      <div class="p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1 text-xs" id="dossierPrintArea">
         
-        <!-- Encabezado de Documento PDF -->
-        <div class="hidden border-b-2 border-slate-600 pb-3 mb-4 flex justify-between items-center" id="pdfHeader">
-          <div>
-            <h2 class="text-xl font-bold text-black uppercase">FICHA OPERATIVA DE INTELIGENCIA</h2>
-            <p class="text-xs text-gray-600">Sistema Unificado de Búsqueda y Registro</p>
-          </div>
-          <div class="text-right text-xs text-gray-500">
-            <p>Fecha de Impresión: <span id="pdfPrintDate"></span></p>
-            <p class="font-mono text-[10px]" id="pdfDocId"></p>
-          </div>
-        </div>
-
         <!-- Galería de Fotos del Expediente -->
         <div>
-          <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-800 pb-1">Galería Fotográfica</h4>
+          <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Galería Fotográfica</h4>
           <div id="modalGallery" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
         </div>
 
         <!-- Información Personal y de Abordamiento -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800" id="dossierDetailsCard">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
           <div class="space-y-2">
             <h4 class="text-blue-400 font-bold uppercase border-b border-slate-800 pb-1">Datos Personales</h4>
             <p><strong class="text-slate-400">Nombre Completo:</strong> <span id="mFullName" class="text-slate-200"></span></p>
-            <p><strong class="text-slate-400">Alias / Apodo:</strong> <span id="mAlias" class="text-yellow-400 font-semibold"></span></p>
+            <p><strong class="text-slate-400">Alias:</strong> <span id="mAlias" class="text-yellow-400 font-semibold"></span></p>
             <p><strong class="text-slate-400">Edad / Nacimiento:</strong> <span id="mAge"></span></p>
             <p><strong class="text-slate-400">CURP:</strong> <span id="mCurp" class="font-mono"></span></p>
             <p><strong class="text-slate-400">Teléfono:</strong> <span id="mPhone"></span></p>
@@ -231,7 +216,7 @@
             <p><strong class="text-slate-400">Vehículo:</strong> <span id="mVehicleInfo"></span></p>
             <p><strong class="text-slate-400">Placas:</strong> <span id="mPlates" class="bg-slate-800 px-2 py-0.5 rounded font-mono text-white"></span></p>
             <p><strong class="text-slate-400">NIV / Serie:</strong> <span id="mVin" class="font-mono"></span></p>
-            <p><strong class="text-slate-400">Fuente de Origen:</strong> <span id="mSource" class="text-emerald-400 font-semibold"></span></p>
+            <p><strong class="text-slate-400">Fuente:</strong> <span id="mSource" class="text-emerald-400 font-semibold"></span></p>
           </div>
         </div>
 
@@ -244,14 +229,13 @@
     <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-6 flex flex-col space-y-4 shadow-2xl">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-base text-white flex items-center gap-2">
-          <i class="fa-solid fa-camera-retro text-emerald-400"></i> Búsqueda Inteligente por Fotografía
+          <i class="fa-solid fa-camera-retro text-emerald-400"></i> Búsqueda Inteligente por Foto Capturada
         </h3>
         <button onclick="closeCameraModal()" class="text-slate-400 hover:text-white text-lg">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <!-- Area de Captura -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
         <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden relative flex flex-col items-center justify-center min-h-[220px]">
           <video id="webcam" autoplay playsinline class="w-full h-48 object-cover hidden"></video>
@@ -277,12 +261,11 @@
           </label>
 
           <button onclick="runPhotoMatch()" id="btnSearchMatch" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 px-3 rounded-lg font-semibold transition hidden flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30">
-            <i class="fa-solid fa-microchip"></i> Escanear Coincidencias Biométricas
+            <i class="fa-solid fa-microchip"></i> Buscar Coincidencias Biométricas
           </button>
         </div>
       </div>
 
-      <!-- Resultados de Coincidencia -->
       <div id="matchResults" class="border-t border-slate-800 pt-3 hidden">
         <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Resultados con Mayor Similitud Visual</h4>
         <div id="matchList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar"></div>
@@ -290,8 +273,11 @@
     </div>
   </div>
 
-  <!-- SCRIPT LOGIC -->
+  <!-- SCRIPT LOGIC Y OPTIMIZACIONES -->
   <script>
+    // Clave API de Mapas
+    const MAP_API_KEY = 'cb1_3yax_1_62a7917a038a98cc4759f31f';
+
     // Configuración de enlaces de Google Sheets
     const SHEET_CONFIGS = [
       { id: '1EgudaTwmNvHi8eKPMQbCz8eD6fKS1GdrIuIp_R-xVfk', gid: '501282295', source: 'Abordamientos' },
@@ -305,36 +291,34 @@
     let allRecords = [];
     let filteredRecords = [];
     let map, markersLayer, heatLayer;
-    let mapMode = 'pins'; // 'pins' o 'heat'
-    let currentSelectedItem = null;
+    let currentMapMode = 'markers';
+    let activeItemForPdf = null;
     let webcamStream = null;
 
-    // Inicializar Mapa
+    // Función Debounce para acelerar búsquedas
+    function debounce(func, wait = 150) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+    const debouncedApplyFilters = debounce(applyFilters, 150);
+
+    // Inicializar Mapa Acelerado por Canvas con API Key
     function initMap() {
-      map = L.map('map').setView([25.6866, -100.3161], 11); // Monterrey / Metropolitano
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        maxZoom: 19
+      map = L.map('map', { preferCanvas: true }).setView([25.6866, -100.3161], 11);
+      
+      // Integración de capa con API Key
+      const tileUrl = `https://maps.geoapify.com/v1/tile/dark-matter/{z}/{x}/{y}.png?apiKey=${MAP_API_KEY}`;
+      L.tileLayer(tileUrl, {
+        attribution: '&copy; Geoapify &copy; OpenStreetMap',
+        maxZoom: 19,
+        apiKey: MAP_API_KEY
       }).addTo(map);
 
       markersLayer = L.layerGroup().addTo(map);
-    }
-
-    // Cambiar Modo de Mapa (Puntos vs Mapa de Calor)
-    function setMapMode(mode) {
-      mapMode = mode;
-      const btnPins = document.getElementById('btnMapPins');
-      const btnHeat = document.getElementById('btnMapHeat');
-
-      if (mode === 'pins') {
-        btnPins.className = "px-2 py-1 rounded bg-blue-600 text-white font-medium transition flex items-center gap-1";
-        btnHeat.className = "px-2 py-1 rounded text-slate-400 hover:text-white font-medium transition flex items-center gap-1";
-      } else {
-        btnHeat.className = "px-2 py-1 rounded bg-red-600 text-white font-medium transition flex items-center gap-1";
-        btnPins.className = "px-2 py-1 rounded text-slate-400 hover:text-white font-medium transition flex items-center gap-1";
-      }
-
-      renderMapVisualization();
+      heatLayer = L.heatLayer([], { radius: 25, blur: 15, maxZoom: 17 });
     }
 
     // Convertir URLs de Google Drive a URLs directas
@@ -354,34 +338,38 @@
       return parsed;
     }
 
-    // Sincronizar y Cargar Datos desde los 6 links
+    // Sincronizar y Cargar Datos en PARALELO con Promise.all (Ultra Rápido)
     async function syncData() {
       const icon = document.getElementById('syncIcon');
       icon.classList.add('fa-spin');
       allRecords = [];
 
-      for (const config of SHEET_CONFIGS) {
+      const promises = SHEET_CONFIGS.map(async (config) => {
         const csvUrl = `https://docs.google.com/spreadsheets/d/${config.id}/gviz/tq?tqx=out:csv&gid=${config.gid}`;
         try {
           const res = await fetch(csvUrl);
           const text = await res.text();
-          Papa.parse(text, {
-            header: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-              normalizeRecords(results.data, config.source);
-            }
+          return new Promise((resolve) => {
+            Papa.parse(text, {
+              header: true,
+              skipEmptyLines: true,
+              complete: (results) => {
+                normalizeRecords(results.data, config.source);
+                resolve();
+              }
+            });
           });
         } catch (err) {
           console.warn('Error cargando fuente:', config, err);
         }
-      }
+      });
 
+      await Promise.all(promises);
       icon.classList.remove('fa-spin');
       applyFilters();
     }
 
-    // Normalizar datos de estructuras variadas
+    // Normalizar registros heterogéneos
     function normalizeRecords(rows, source) {
       rows.forEach((r, idx) => {
         const name = r['NOMBRE COMPLETO'] || r['NOMBRE DE DETENIDO CORRECT'] || `${r['NOMBRE']||''} ${r['APELLIDO PAT']||''} ${r['APELLIDO MAT']||''}`.trim();
@@ -391,7 +379,6 @@
         const photosId = parseDriveImageUrls(r['GRAFICA DE IDENTIFICACION']);
         const photosVehicle = parseDriveImageUrls(r['GRAFICA DE VEHICULO'] || r['IMAGEN']);
 
-        // Parsear Latitud / Longitud
         let lat = parseFloat(r['LATITUD'] || r['LAT']);
         let lng = parseFloat(r['LONGITUD'] || r['LNG']);
         if (isNaN(lat) && r['COORDENADAS DE UBICACION']) {
@@ -403,7 +390,7 @@
         }
 
         allRecords.push({
-          id: `${source}-${idx}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `${source}-${idx}-${Math.random().toString(36).substring(2,7)}`,
           source: source,
           name: name || 'NO REGISTRADO',
           alias: r['ALIAS'] || r['ALIA'] || 'N/A',
@@ -423,12 +410,13 @@
           photosId,
           photosVehicle,
           lat: !isNaN(lat) ? lat : null,
-          lng: !isNaN(lng) ? lng : null
+          lng: !isNaN(lng) ? lng : null,
+          raw: r
         });
       });
     }
 
-    // Aplicar Filtros
+    // Aplicar Filtros de Búsqueda
     function applyFilters() {
       const qGen = document.getElementById('filterGeneral').value.toLowerCase();
       const qPlate = document.getElementById('filterPlates').value.toLowerCase();
@@ -455,13 +443,13 @@
         return matchGen && matchPlate && matchBrand && matchColor && matchVin && matchSource;
       });
 
-      renderResults();
-      renderMapVisualization();
+      renderResultsBatch();
+      renderMapData();
       updateStats();
     }
 
-    // Renderizar Cards
-    function renderResults() {
+    // Renderizar Cards con DocumentFragment (Repintado único súper rápido)
+    function renderResultsBatch() {
       const container = document.getElementById('resultsContainer');
       document.getElementById('resultsCount').innerText = filteredRecords.length;
       container.innerHTML = '';
@@ -471,16 +459,18 @@
         return;
       }
 
-      filteredRecords.slice(0, 50).forEach(item => {
+      const fragment = document.createDocumentFragment();
+
+      filteredRecords.slice(0, 48).forEach(item => {
         const mainPhoto = item.photosPerson[0] || item.photosVehicle[0] || 'https://via.placeholder.com/300x200?text=SIN+FOTO';
         
         const card = document.createElement('div');
-        card.className = 'bg-slate-950 border border-slate-800 hover:border-blue-500 rounded-xl overflow-hidden shadow-lg transition duration-200 flex flex-col cursor-pointer';
+        card.className = 'bg-slate-950 border border-slate-800 hover:border-blue-500 rounded-xl overflow-hidden shadow-lg transition flex flex-col cursor-pointer';
         card.onclick = () => openModal(item);
 
         card.innerHTML = `
           <div class="h-40 bg-slate-900 relative overflow-hidden">
-            <img src="${mainPhoto}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x200?text=SIN+FOTO'" />
+            <img src="${mainPhoto}" loading="lazy" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x200?text=ERROR+IMAGEN'" />
             <span class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[10px] px-2 py-0.5 rounded border border-slate-700 font-semibold">
               ${item.source}
             </span>
@@ -497,36 +487,63 @@
             </div>
           </div>
         `;
-        container.appendChild(card);
+        fragment.appendChild(card);
       });
+
+      container.appendChild(fragment);
     }
 
-    // Renderizar Mapa (Soporte para Marcadores y Heatmap de Calor)
-    function renderMapVisualization() {
+    // Cambiar Modo de Mapa: Marcadores vs Heatmap
+    function setMapMode(mode) {
+      currentMapMode = mode;
+      const btnM = document.getElementById('btnMapMarkers');
+      const btnH = document.getElementById('btnMapHeatmap');
+
+      if (mode === 'markers') {
+        btnM.className = 'px-2.5 py-1 rounded-md font-semibold bg-blue-600 text-white transition';
+        btnH.className = 'px-2.5 py-1 rounded-md font-semibold text-slate-400 hover:text-white transition';
+        map.removeLayer(heatLayer);
+        map.addLayer(markersLayer);
+      } else {
+        btnH.className = 'px-2.5 py-1 rounded-md font-semibold bg-amber-600 text-white transition';
+        btnM.className = 'px-2.5 py-1 rounded-md font-semibold text-slate-400 hover:text-white transition';
+        map.removeLayer(markersLayer);
+        map.addLayer(heatLayer);
+      }
+      renderMapData();
+    }
+
+    // Renderizar Marcadores / Mapa de Calor
+    function renderMapData() {
       markersLayer.clearLayers();
-      if (heatLayer) map.removeLayer(heatLayer);
+      const heatPoints = [];
 
-      const gpsRecords = filteredRecords.filter(i => i.lat && i.lng);
+      filteredRecords.forEach(item => {
+        if (item.lat && item.lng) {
+          if (currentMapMode === 'markers') {
+            const marker = L.circleMarker([item.lat, item.lng], {
+              radius: 6,
+              fillColor: "#3b82f6",
+              color: "#ffffff",
+              weight: 1,
+              opacity: 0.9,
+              fillOpacity: 0.8
+            }).bindPopup(`
+              <div class="text-slate-900 text-xs">
+                <strong>${item.name}</strong><br/>
+                <span>${item.brand} - ${item.plates}</span><br/>
+                <button onclick="openModalById('${item.id}')" class="mt-1 bg-blue-600 text-white px-2 py-0.5 rounded text-[10px]">Ver Expediente</button>
+              </div>
+            `);
+            markersLayer.addLayer(marker);
+          } else {
+            heatPoints.push([item.lat, item.lng, 0.8]);
+          }
+        }
+      });
 
-      if (mapMode === 'pins') {
-        gpsRecords.forEach(item => {
-          const marker = L.marker([item.lat, item.lng]).bindPopup(`
-            <div class="text-slate-900 text-xs">
-              <strong>${item.name}</strong><br/>
-              <span>${item.brand} - ${item.plates}</span><br/>
-              <button onclick="openModalById('${item.id}')" class="mt-1 bg-blue-600 text-white px-2 py-0.5 rounded text-[10px]">Ver Dossier</button>
-            </div>
-          `);
-          markersLayer.addLayer(marker);
-        });
-      } else if (mapMode === 'heat') {
-        const heatPoints = gpsRecords.map(item => [item.lat, item.lng, 0.8]); // [lat, lng, intensidad]
-        heatLayer = L.heatLayer(heatPoints, {
-          radius: 25,
-          blur: 15,
-          maxZoom: 17,
-          gradient: { 0.4: 'blue', 0.65: 'lime', 1: 'red' }
-        }).addTo(map);
+      if (currentMapMode === 'heatmap') {
+        heatLayer.setLatLngs(heatPoints);
       }
     }
 
@@ -537,9 +554,9 @@
       document.getElementById('statGps').innerText = allRecords.filter(i => i.lat && i.lng).length;
     }
 
-    // Abrir Dossier
+    // Abrir Modal de Expediente
     function openModal(item) {
-      currentSelectedItem = item;
+      activeItemForPdf = item;
       document.getElementById('mFullName').innerText = item.name;
       document.getElementById('mAlias').innerText = item.alias;
       document.getElementById('mAge').innerText = item.age;
@@ -558,12 +575,12 @@
       
       const allPhotos = [...item.photosPerson, ...item.photosId, ...item.photosVehicle];
       if (allPhotos.length === 0) {
-        gallery.innerHTML = `<p class="text-slate-500 col-span-full">Sin fotografías adjuntas.</p>`;
+        gallery.innerHTML = `<p class="text-slate-500 col-span-full">Sin fotografías adjuntas en el registro.</p>`;
       } else {
         allPhotos.forEach(p => {
           gallery.innerHTML += `
             <div class="h-32 bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
-              <img src="${p}" class="w-full h-full object-cover" onclick="window.open('${p}', '_blank')" onerror="this.src='https://via.placeholder.com/300x200?text=ERROR'" />
+              <img src="${p}" loading="lazy" class="w-full h-full object-cover" onclick="window.open('${p}', '_blank')" />
             </div>
           `;
         });
@@ -581,34 +598,25 @@
       document.getElementById('dossierModal').classList.add('hidden');
     }
 
-    // EXPORTACIÓN A PDF FORMATO FICHA TECNICA
-    function exportDossierPDF() {
-      if (!currentSelectedItem) return;
-
-      const printArea = document.getElementById('dossierPrintArea');
-      const pdfHeader = document.getElementById('pdfHeader');
-
-      // Preparar campos para PDF
-      document.getElementById('pdfPrintDate').innerText = new Date().toLocaleString();
-      document.getElementById('pdfDocId').innerText = `REF-ID: ${currentSelectedItem.id}`;
+    // Exportación a PDF con html2pdf.js
+    function exportDossierToPDF() {
+      if (!activeItemForPdf) return;
       
-      // Mostrar encabezado especial para PDF
-      pdfHeader.classList.remove('hidden');
-
+      const element = document.getElementById('dossierPrintArea');
+      const filename = `Dossier_${activeItemForPdf.name.replace(/\s+/g, '_')}.pdf`;
+      
       const opt = {
-        margin:       [0.4, 0.4, 0.4, 0.4],
-        filename:     `DOSSIER_${currentSelectedItem.name.replace(/\s+/g, '_')}.pdf`,
+        margin:       0.4,
+        filename:     filename,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, logging: false },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
 
-      html2pdf().set(opt).from(printArea).save().then(() => {
-        pdfHeader.classList.add('hidden');
-      });
+      html2pdf().set(opt).from(element).save();
     }
 
-    // LÓGICA DE RECONOCIMIENTO FOTOGRÁFICO
+    // Reconocimiento Fotográfico
     function openCameraModal() {
       document.getElementById('cameraModal').classList.remove('hidden');
     }
@@ -630,7 +638,7 @@
         document.getElementById('camPlaceholder').classList.add('hidden');
         document.getElementById('btnSnap').classList.remove('hidden');
       } catch (err) {
-        alert('No se pudo acceder a la cámara.');
+        alert('No se pudo acceder a la cámara del dispositivo.');
       }
     }
 
@@ -665,14 +673,14 @@
       const resultsDiv = document.getElementById('matchResults');
       const matchList = document.getElementById('matchList');
       resultsDiv.classList.remove('hidden');
-      matchList.innerHTML = '<p class="text-slate-400 text-xs">Comparando con base de fotos almacenadas...</p>';
+      matchList.innerHTML = '<p class="text-slate-400 text-xs">Escaneando coincidencias en la base de datos...</p>';
 
       setTimeout(() => {
         matchList.innerHTML = '';
         const candidates = allRecords.filter(r => r.photosPerson.length > 0);
         
         if (candidates.length === 0) {
-          matchList.innerHTML = '<p class="text-slate-500 text-xs">Sin fotos registradas para comparar.</p>';
+          matchList.innerHTML = '<p class="text-slate-500 text-xs">No hay fotografías registradas para comparar.</p>';
           return;
         }
 
@@ -685,7 +693,7 @@
           matchList.innerHTML += `
             <div onclick="openModalById('${m.record.id}')" class="p-2 bg-slate-950 border border-slate-800 hover:border-emerald-500 rounded-lg flex items-center justify-between cursor-pointer">
               <div class="flex items-center gap-3">
-                <img src="${m.record.photosPerson[0]}" class="w-10 h-10 object-cover rounded-full" />
+                <img src="${m.record.photosPerson[0]}" loading="lazy" class="w-10 h-10 object-cover rounded-full" />
                 <div>
                   <h5 class="font-bold text-white text-xs">${m.record.name}</h5>
                   <p class="text-[10px] text-slate-400">Alias: ${m.record.alias} | Placas: ${m.record.plates||'N/A'}</p>
@@ -697,9 +705,10 @@
             </div>
           `;
         });
-      }, 1000);
+      }, 400);
     }
 
+    // Inicialización
     window.onload = () => {
       initMap();
       syncData();
