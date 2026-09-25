@@ -29,11 +29,96 @@
     .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     #map { height: 100%; min-height: 250px; }
-    /* Fix para iOS overflow */
     .touch-scroll { -webkit-overflow-scrolling: touch; }
   </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans antialiased">
+
+  <!-- ========================================== -->
+  <!-- PANTALLA DE AUTENTICACIÓN (LOGIN / REGISTRO) -->
+  <!-- ========================================== -->
+  <div id="authScreen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+      
+      <!-- Encabezado Auth -->
+      <div class="text-center mb-6">
+        <div class="inline-flex bg-blue-600/20 text-blue-500 p-3 rounded-2xl mb-3 border border-blue-500/30">
+          <i class="fa-solid fa-shield-halved text-3xl"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white tracking-wide">ACCESO AL SISTEMA</h2>
+        <p class="text-xs text-slate-400 mt-1">Plataforma de Inteligencia & Búsqueda Operativa</p>
+      </div>
+
+      <!-- Conmutador de Pestañas (Login / Registro) -->
+      <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 mb-6 text-xs">
+        <button onclick="switchAuthTab('login')" id="tabLogin" class="flex-1 py-2 font-bold rounded-lg bg-blue-600 text-white transition text-center">
+          Iniciar Sesión
+        </button>
+        <button onclick="switchAuthTab('register')" id="tabRegister" class="flex-1 py-2 font-bold rounded-lg text-slate-400 transition text-center hover:text-white">
+          Crear Cuenta
+        </button>
+      </div>
+
+      <!-- FORMULARIO DE INICIO DE SESIÓN -->
+      <form id="formLogin" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Usuario / Correo</label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3 top-3 text-slate-500 text-xs"></i>
+            <input type="text" id="loginUser" required placeholder="ej. 110543 o correo@gmail.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Contraseña</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3 top-3 text-slate-500 text-xs"></i>
+            <input type="password" id="loginPass" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+
+        <div id="loginError" class="hidden text-red-400 text-xs bg-red-950/40 border border-red-800/50 p-2.5 rounded-lg text-center font-medium">
+          Usuario o contraseña incorrectos.
+        </div>
+
+        <button type="submit" id="btnLoginSubmit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-right-to-bracket"></i> Acceder al Sistema
+        </button>
+      </form>
+
+      <!-- FORMULARIO DE REGISTRO DE USUARIO -->
+      <form id="formRegister" onsubmit="handleRegister(event)" class="space-y-3 hidden">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Nombre Completo</label>
+          <input type="text" id="regName" required placeholder="Nombre y Apellidos" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Usuario / Nómina</label>
+          <input type="text" id="regUser" required placeholder="ej. 110543" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Correo Electrónico</label>
+          <input type="email" id="regEmail" required placeholder="correo@ejemplo.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Contraseña</label>
+          <input type="password" id="regPass" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <div id="regSuccess" class="hidden text-emerald-400 text-xs bg-emerald-950/40 border border-emerald-800/50 p-2.5 rounded-lg text-center font-medium">
+          ¡Usuario registrado con éxito! Ya puedes iniciar sesión.
+        </div>
+
+        <button type="submit" id="btnRegisterSubmit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-user-plus"></i> Registrar Usuario
+        </button>
+      </form>
+
+    </div>
+  </div>
 
   <!-- TOPBAR RESPONSIVA -->
   <header class="bg-slate-950 border-b border-slate-800 px-4 py-2.5 flex justify-between items-center z-30 shrink-0">
@@ -53,6 +138,16 @@
     </div>
     
     <div class="flex items-center space-x-2">
+      <!-- Usuario Activo & Logout -->
+      <div id="userInfoHeader" class="hidden sm:flex items-center gap-2 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg text-xs mr-1">
+        <i class="fa-solid fa-user-shield text-blue-400"></i>
+        <span id="activeUserName" class="font-bold text-slate-200 truncate max-w-[140px]"></span>
+      </div>
+
+      <button onclick="logout()" title="Cerrar Sesión" class="bg-slate-800 hover:bg-slate-700 text-red-400 text-xs p-2 sm:px-3 sm:py-2 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">Salir</span>
+      </button>
+
       <button onclick="syncData()" id="btnSync" title="Sincronizar" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs p-2 sm:px-3 sm:py-2 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
         <i class="fa-solid fa-rotate" id="syncIcon"></i> <span class="hidden sm:inline">Sincronizar</span>
       </button>
@@ -318,6 +413,12 @@
 
   <!-- SCRIPT LOGIC -->
   <script>
+    // URL del Google Sheet de Usuarios
+    const USERS_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/1vYqMxZbNIsTx5Kud_9bFiiI-OYme08ZlJFCzLVKXsiI/gviz/tq?tqx=out:csv&gid=0';
+    
+    // (Opcional) Web App URL de Google Apps Script para guardar nuevos registros
+    const APPS_SCRIPT_WEBAPP_URL = ''; 
+
     const SHEET_CONFIGS = [
       { id: '1EgudaTwmNvHi8eKPMQbCz8eD6fKS1GdrIuIp_R-xVfk', gid: '501282295', source: 'Abordamientos' },
       { id: '1rl28kCEfkpu9G7oly87NHw4_XGCsjWhSssMxa6Et9SY', gid: '1225183609', source: 'Detenciones' },
@@ -333,6 +434,130 @@
     let currentMapMode = 'markers';
     let activeItemForPdf = null;
     let webcamStream = null;
+    let registeredUsersList = [];
+
+    // LÓGICA DE AUTENTICACIÓN
+    function checkSession() {
+      const savedUser = localStorage.getItem('activeUser');
+      if (savedUser) {
+        const userObj = JSON.parse(savedUser);
+        document.getElementById('activeUserName').innerText = userObj.Nombre || userObj.Usuario;
+        document.getElementById('userInfoHeader').classList.remove('hidden');
+        document.getElementById('authScreen').classList.add('hidden');
+        initMap();
+        syncData();
+      } else {
+        document.getElementById('authScreen').classList.remove('hidden');
+        loadUsersFromSheet();
+      }
+    }
+
+    async function loadUsersFromSheet() {
+      try {
+        const res = await fetch(USERS_SHEET_CSV);
+        const text = await res.text();
+        Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            registeredUsersList = results.data;
+          }
+        });
+      } catch (e) {
+        console.warn('Error cargando usuarios:', e);
+      }
+    }
+
+    function switchAuthTab(tab) {
+      const fLogin = document.getElementById('formLogin');
+      const fReg = document.getElementById('formRegister');
+      const tLogin = document.getElementById('tabLogin');
+      const tReg = document.getElementById('tabRegister');
+
+      if (tab === 'login') {
+        fLogin.classList.remove('hidden');
+        fReg.classList.add('hidden');
+        tLogin.className = 'flex-1 py-2 font-bold rounded-lg bg-blue-600 text-white transition text-center';
+        tReg.className = 'flex-1 py-2 font-bold rounded-lg text-slate-400 transition text-center hover:text-white';
+      } else {
+        fReg.classList.remove('hidden');
+        fLogin.classList.add('hidden');
+        tReg.className = 'flex-1 py-2 font-bold rounded-lg bg-emerald-600 text-white transition text-center';
+        tLogin.className = 'flex-1 py-2 font-bold rounded-lg text-slate-400 transition text-center hover:text-white';
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const uInput = document.getElementById('loginUser').value.trim().toLowerCase();
+      const pInput = document.getElementById('loginPass').value.trim();
+      const errBox = document.getElementById('loginError');
+      errBox.classList.add('hidden');
+
+      if (registeredUsersList.length === 0) {
+        await loadUsersFromSheet();
+      }
+
+      // Buscar coincidencia en columnas de Google Sheet
+      const found = registeredUsersList.find(u => {
+        const sheetUser = (u['Usuario'] || '').toString().trim().toLowerCase();
+        const sheetEmail = (u['Correo electronico'] || u['Correo electrónico'] || u['Correo'] || '').toString().trim().toLowerCase();
+        const sheetPass = (u['Password'] || u['Contraseña'] || '').toString().trim();
+
+        return (sheetUser === uInput || sheetEmail === uInput) && sheetPass === pInput;
+      });
+
+      if (found) {
+        localStorage.setItem('activeUser', JSON.stringify(found));
+        checkSession();
+      } else {
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const user = document.getElementById('regUser').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const pass = document.getElementById('regPass').value.trim();
+
+      const newUser = {
+        'Nombre': name,
+        'Usuario': user,
+        'Password': pass,
+        'Correo electronico': email
+      };
+
+      registeredUsersList.push(newUser);
+
+      // Si se configuró Apps Script, enviar los datos por POST
+      if (APPS_SCRIPT_WEBAPP_URL) {
+        try {
+          await fetch(APPS_SCRIPT_WEBAPP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newUser)
+          });
+        } catch (err) {
+          console.warn('Error enviando a Apps Script:', err);
+        }
+      }
+
+      document.getElementById('regSuccess').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('regSuccess').classList.add('hidden');
+        document.getElementById('loginUser').value = user;
+        document.getElementById('loginPass').value = pass;
+        switchAuthTab('login');
+      }, 1500);
+    }
+
+    function logout() {
+      localStorage.removeItem('activeUser');
+      location.reload();
+    }
 
     function debounce(func, wait = 150) {
       let timeout;
@@ -380,6 +605,7 @@
     }
 
     function initMap() {
+      if (map) return;
       map = L.map('map', { preferCanvas: true }).setView([25.6866, -100.3161], 11);
       
       const tileUrl = 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_3yax_1_62a7917a038a98cc4759f31f';
@@ -447,7 +673,6 @@
         const photosId = parseDriveImageUrls(r['GRAFICA DE IDENTIFICACION']);
         const photosVehicle = parseDriveImageUrls(r['GRAFICA DE VEHICULO'] || r['IMAGEN']);
 
-        // Extraer Motivo / Razón de detención o abordamiento
         const detentionReason = r['TIPO DE DETENCION'] || r['Resultado de abordamiento'] || r['ENTREVISTA'] || r['OPERATIVO'] || 'Inspección / Abordamiento de Rutina';
 
         let lat = parseFloat(r['LATITUD'] || r['LAT']);
@@ -566,7 +791,6 @@
               </div>
             </div>
 
-            <!-- Motivo de Detención o Abordamiento -->
             <div class="bg-amber-950/30 border border-amber-800/40 p-1.5 rounded-lg text-[10px]">
               <span class="text-amber-400 font-bold block">Motivo / Evento:</span>
               <p class="text-slate-200 line-clamp-1">${item.detentionReason}</p>
@@ -604,6 +828,7 @@
     }
 
     function renderMapData() {
+      if (!map) return;
       markersLayer.clearLayers();
       const heatPoints = [];
 
@@ -799,8 +1024,7 @@
     }
 
     window.onload = () => {
-      initMap();
-      syncData();
+      checkSession();
     };
   </script>
 </body>
