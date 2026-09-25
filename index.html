@@ -2,7 +2,7 @@
 <html lang="es" class="h-full bg-slate-900 text-slate-100">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Sistema Integrado de Búsqueda e Inteligencia Operativa</title>
   
   <!-- Tailwind CSS -->
@@ -24,42 +24,58 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    body { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    #map { min-height: 380px; }
+    #map { height: 100%; min-height: 250px; }
+    /* Fix para iOS overflow */
+    .touch-scroll { -webkit-overflow-scrolling: touch; }
   </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased overflow-hidden">
+<body class="bg-slate-900 text-slate-100 font-sans antialiased">
 
-  <!-- TOPBAR -->
-  <header class="bg-slate-950 border-b border-slate-800 px-6 py-3 flex justify-between items-center z-20">
-    <div class="flex items-center space-x-3">
-      <div class="bg-blue-600 text-white p-2 rounded-lg shadow-lg shadow-blue-500/20">
-        <i class="fa-solid fa-shield-halved text-xl"></i>
+  <!-- TOPBAR RESPONSIVA -->
+  <header class="bg-slate-950 border-b border-slate-800 px-4 py-2.5 flex justify-between items-center z-30 shrink-0">
+    <div class="flex items-center space-x-2">
+      <button onclick="toggleMobileSidebar()" class="lg:hidden bg-slate-800 text-slate-200 p-2 rounded-lg border border-slate-700">
+        <i class="fa-solid fa-bars text-base"></i>
+      </button>
+      <div class="bg-blue-600 text-white p-1.5 rounded-lg shadow-lg shadow-blue-500/20">
+        <i class="fa-solid fa-shield-halved text-lg"></i>
       </div>
       <div>
-        <h1 class="font-bold text-lg leading-tight tracking-wide text-white">SISTEMA INTEGRADO DE BÚSQUEDA Y DOSSIERS</h1>
-        <p class="text-xs text-slate-400">Inteligencia Operativa & Reconocimiento Multifuente</p>
+        <h1 class="font-bold text-sm sm:text-base leading-tight text-white tracking-wide truncate max-w-[180px] sm:max-w-none">
+          INTELES - BUSCADOR OPERATIVO
+        </h1>
+        <p class="text-[10px] sm:text-xs text-slate-400 hidden sm:block">Inteligencia Operativa & Reconocimiento Multifuente</p>
       </div>
     </div>
     
-    <div class="flex items-center space-x-3">
-      <button onclick="syncData()" id="btnSync" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-700 transition flex items-center gap-2">
-        <i class="fa-solid fa-rotate" id="syncIcon"></i> Sincronizar Base de Datos
+    <div class="flex items-center space-x-2">
+      <button onclick="syncData()" id="btnSync" title="Sincronizar" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs p-2 sm:px-3 sm:py-2 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-rotate" id="syncIcon"></i> <span class="hidden sm:inline">Sincronizar</span>
       </button>
-      <button onclick="openCameraModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-4 py-2 rounded-lg shadow-lg shadow-emerald-600/30 transition flex items-center gap-2">
-        <i class="fa-solid fa-camera"></i> Búsqueda por Fotografía
+      <button onclick="openCameraModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-3 py-2 rounded-lg shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-camera"></i> <span class="hidden sm:inline">Búsqueda Foto</span>
       </button>
     </div>
   </header>
 
   <!-- CONTENT WRAPPER -->
-  <div class="flex-1 flex overflow-hidden">
+  <div class="flex-1 flex overflow-hidden relative">
     
-    <!-- SIDEBAR: FILTROS DE BÚSQUEDA -->
-    <aside class="w-80 bg-slate-950 border-r border-slate-800 flex flex-col p-4 custom-scrollbar overflow-y-auto space-y-5">
+    <!-- BACKDROP PARA MÓVIL -->
+    <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden lg:hidden backdrop-blur-sm"></div>
+
+    <!-- SIDEBAR / FILTROS (Drapeau Móvil + Barra Lateral en Desktop) -->
+    <aside id="sidebarDrawer" class="fixed lg:relative inset-y-0 left-0 z-40 w-80 bg-slate-950 border-r border-slate-800 flex flex-col p-4 custom-scrollbar overflow-y-auto space-y-4 transition-transform duration-300 -translate-x-full lg:translate-x-0 shrink-0">
       
+      <div class="flex justify-between items-center lg:hidden border-b border-slate-800 pb-2">
+        <h3 class="font-bold text-slate-200 text-sm"><i class="fa-solid fa-filter text-blue-500"></i> Filtros de Búsqueda</h3>
+        <button onclick="toggleMobileSidebar()" class="text-slate-400 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
       <!-- Buscador General -->
       <div>
         <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Búsqueda General (Persona / Alias / CURP)</label>
@@ -70,7 +86,7 @@
       </div>
 
       <!-- Filtros de Vehículo -->
-      <div class="border-t border-slate-800 pt-4 space-y-3">
+      <div class="border-t border-slate-800 pt-3 space-y-2.5">
         <h3 class="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center gap-2">
           <i class="fa-solid fa-car"></i> Filtros de Vehículo
         </h3>
@@ -98,7 +114,7 @@
       </div>
 
       <!-- Filtro por Origen de Datos -->
-      <div class="border-t border-slate-800 pt-4 space-y-2">
+      <div class="border-t border-slate-800 pt-3 space-y-1.5">
         <label class="block text-xs font-semibold text-slate-400 uppercase">Origen de Datos</label>
         <select id="filterSource" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
           <option value="ALL">Todas las Fuentes (6 Tablas)</option>
@@ -110,7 +126,7 @@
       </div>
 
       <!-- Métricas -->
-      <div class="border-t border-slate-800 pt-4 bg-slate-900/50 p-3 rounded-lg text-xs space-y-1">
+      <div class="border-t border-slate-800 pt-3 bg-slate-900/50 p-3 rounded-lg text-xs space-y-1">
         <div class="flex justify-between text-slate-400">
           <span>Total Registros:</span>
           <span id="statTotal" class="font-bold text-white">0</span>
@@ -130,75 +146,86 @@
     <!-- MAIN DASHBOARD CONTENT -->
     <main class="flex-1 flex flex-col overflow-hidden bg-slate-900">
       
+      <!-- CONTROLES DE PESTAÑA PARA MÓVIL (MÓVIL ONLY) -->
+      <div class="flex lg:hidden bg-slate-950 border-b border-slate-800 p-1 shrink-0">
+        <button onclick="switchMobileTab('cards')" id="tabBtnCards" class="flex-1 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white text-center">
+          <i class="fa-solid fa-users"></i> Resultados (<span id="mobileCount">0</span>)
+        </button>
+        <button onclick="switchMobileTab('map')" id="tabBtnMap" class="flex-1 py-1.5 text-xs font-bold rounded-md text-slate-400 text-center">
+          <i class="fa-solid fa-map-location-dot"></i> Mapa GPS
+        </button>
+      </div>
+
       <!-- VISTA DIVIDIDA: MAPA Y RESULTADOS -->
       <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
         
         <!-- CARDS / GALERÍA DE RESULTADOS -->
-        <section class="flex-1 p-4 overflow-y-auto custom-scrollbar">
-          <div class="flex justify-between items-center mb-3">
+        <section id="sectionCards" class="flex-1 p-3 sm:p-4 overflow-y-auto custom-scrollbar touch-scroll">
+          <div class="hidden lg:flex justify-between items-center mb-3">
             <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
               <i class="fa-solid fa-users text-blue-500"></i> Expedientes Encontrados (<span id="resultsCount">0</span>)
             </h2>
           </div>
 
-          <div id="resultsContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            <!-- Cards dinamicas -->
+          <div id="resultsContainer" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+            <!-- Cards dinámicas -->
           </div>
         </section>
 
         <!-- MAPA DE GEOLOCALIZACIÓN Y HEATMAP -->
-        <section class="w-full lg:w-[480px] border-l border-slate-800 bg-slate-950 flex flex-col p-4">
-          <div class="flex justify-between items-center mb-2">
-            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+        <section id="sectionMap" class="hidden lg:flex w-full lg:w-[480px] border-l border-slate-800 bg-slate-950 flex-col p-3 sm:p-4 h-full">
+          <div class="flex justify-between items-center mb-2 shrink-0">
+            <h2 class="text-xs sm:text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
               <i class="fa-solid fa-map-location-dot text-red-500"></i> Georreferenciación
             </h2>
             
-            <!-- Conmutador de Capa: Puntos vs Mapa de Calor -->
+            <!-- Conmutador: Puntos vs Mapa de Calor -->
             <div class="flex bg-slate-900 p-0.5 rounded-lg border border-slate-800 text-[11px]">
               <button onclick="setMapMode('markers')" id="btnMapMarkers" class="px-2.5 py-1 rounded-md font-semibold bg-blue-600 text-white transition">
                 <i class="fa-solid fa-location-dot"></i> Puntos
               </button>
               <button onclick="setMapMode('heatmap')" id="btnMapHeatmap" class="px-2.5 py-1 rounded-md font-semibold text-slate-400 hover:text-white transition">
-                <i class="fa-solid fa-fire text-amber-500"></i> Mapa Calor
+                <i class="fa-solid fa-fire text-amber-500"></i> Calor
               </button>
             </div>
           </div>
           
-          <div id="map" class="w-full flex-1 rounded-xl border border-slate-800 overflow-hidden shadow-inner z-0"></div>
+          <div class="flex-1 rounded-xl border border-slate-800 overflow-hidden relative">
+            <div id="map" class="w-full h-full"></div>
+          </div>
         </section>
 
       </div>
     </main>
   </div>
 
-  <!-- MODAL DE DETALLE DEL EXPEDIENTE (DOSSIER) CON EXPORTACIÓN PDF -->
-  <div id="dossierModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
-      <div class="bg-slate-950 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
-        <h3 class="font-bold text-lg text-white flex items-center gap-2" id="modalName">
+  <!-- MODAL DE DETALLE DEL EXPEDIENTE (DOSSIER) -->
+  <div id="dossierModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[95dvh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="bg-slate-950 px-4 sm:px-6 py-3 border-b border-slate-800 flex justify-between items-center shrink-0">
+        <h3 class="font-bold text-sm sm:text-lg text-white flex items-center gap-2 truncate pr-2" id="modalName">
           <i class="fa-solid fa-id-card text-blue-500"></i> Expediente Operativo
         </h3>
-        <div class="flex items-center gap-3">
-          <!-- Botón Exportar PDF -->
-          <button onclick="exportDossierToPDF()" class="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-2 shadow">
-            <i class="fa-solid fa-file-pdf"></i> Exportar a PDF
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="exportDossierToPDF()" class="bg-red-600 hover:bg-red-500 text-white text-xs px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-file-pdf"></i> <span class="hidden sm:inline">Exportar PDF</span>
           </button>
-          <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl">
+          <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl p-1">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
       </div>
       
-      <div class="p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1 text-xs" id="dossierPrintArea">
+      <div class="p-4 sm:p-6 overflow-y-auto custom-scrollbar touch-scroll space-y-4 sm:space-y-6 flex-1 text-xs" id="dossierPrintArea">
         
-        <!-- Galería de Fotos del Expediente -->
+        <!-- Galería de Fotos -->
         <div>
           <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Galería Fotográfica</h4>
-          <div id="modalGallery" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+          <div id="modalGallery" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
         </div>
 
-        <!-- Información Personal y de Abordamiento -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
+        <!-- Detalles Personales & Evento -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950 p-3.5 sm:p-4 rounded-xl border border-slate-800">
           <div class="space-y-2">
             <h4 class="text-blue-400 font-bold uppercase border-b border-slate-800 pb-1">Datos Personales</h4>
             <p><strong class="text-slate-400">Nombre Completo:</strong> <span id="mFullName" class="text-slate-200"></span></p>
@@ -224,61 +251,67 @@
     </div>
   </div>
 
-  <!-- MODAL DE BÚSQUEDA POR FOTOGRAFÍA -->
-  <div id="cameraModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-6 flex flex-col space-y-4 shadow-2xl">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-base text-white flex items-center gap-2">
-          <i class="fa-solid fa-camera-retro text-emerald-400"></i> Búsqueda Inteligente por Foto Capturada
+  <!-- MODAL BÚSQUEDA POR FOTO CON SOPORTE MÓVIL NATIVO -->
+  <div id="cameraModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-4 sm:p-6 flex flex-col space-y-4 shadow-2xl max-h-[95dvh] overflow-y-auto custom-scrollbar">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+        <h3 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+          <i class="fa-solid fa-camera-retro text-emerald-400"></i> Búsqueda por Fotografía
         </h3>
-        <button onclick="closeCameraModal()" class="text-slate-400 hover:text-white text-lg">
+        <button onclick="closeCameraModal()" class="text-slate-400 hover:text-white text-lg p-1">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-        <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden relative flex flex-col items-center justify-center min-h-[220px]">
+        <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden relative flex flex-col items-center justify-center min-h-[200px]">
           <video id="webcam" autoplay playsinline class="w-full h-48 object-cover hidden"></video>
           <img id="capturedImage" class="w-full h-48 object-cover hidden" />
           <div id="camPlaceholder" class="text-center p-4 text-slate-500">
             <i class="fa-solid fa-user-gear text-4xl mb-2"></i>
-            <p class="text-xs">Activa la cámara o carga una foto para escanear coincidencias.</p>
+            <p class="text-xs">Usa la cámara o carga una foto de la galería para buscar coincidencias.</p>
           </div>
         </div>
 
-        <div class="flex flex-col space-y-3">
-          <button onclick="startCamera()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs py-2 px-3 rounded-lg font-medium transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-video"></i> Activar Cámara
+        <div class="flex flex-col space-y-2.5">
+          <!-- Botón de Cámara Nativa del Celular -->
+          <label class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2.5 px-3 rounded-lg font-semibold transition cursor-pointer text-center flex items-center justify-center gap-2 shadow">
+            <i class="fa-solid fa-camera"></i> Tomar Foto con Cámara Nativa
+            <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleFileUpload(event)" />
+          </label>
+
+          <!-- Botón de Abrir Visor WebRTC -->
+          <button onclick="startCamera()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs py-2.5 px-3 rounded-lg font-medium transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-video"></i> Activar Visor Web
           </button>
           
-          <button onclick="capturePhoto()" id="btnSnap" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2 px-3 rounded-lg font-medium transition hidden flex items-center justify-center gap-2">
-            <i class="fa-solid fa-circle-dot"></i> Tomar Fotografía
+          <button onclick="capturePhoto()" id="btnSnap" class="bg-amber-600 hover:bg-amber-500 text-white text-xs py-2.5 px-3 rounded-lg font-medium transition hidden flex items-center justify-center gap-2">
+            <i class="fa-solid fa-circle-dot"></i> Capturar Fotograma
           </button>
 
-          <label class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-2 px-3 rounded-lg font-medium transition cursor-pointer text-center border border-slate-700 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-upload"></i> Subir Archivo de Imagen
+          <!-- Subir Imagen desde Archivos/Galería -->
+          <label class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-2.5 px-3 rounded-lg font-medium transition cursor-pointer text-center border border-slate-700 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-image"></i> Seleccionar de Galería
             <input type="file" accept="image/*" class="hidden" onchange="handleFileUpload(event)" />
           </label>
 
-          <button onclick="runPhotoMatch()" id="btnSearchMatch" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 px-3 rounded-lg font-semibold transition hidden flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30">
+          <button onclick="runPhotoMatch()" id="btnSearchMatch" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2.5 px-3 rounded-lg font-semibold transition hidden flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30">
             <i class="fa-solid fa-microchip"></i> Buscar Coincidencias Biométricas
           </button>
         </div>
       </div>
 
       <div id="matchResults" class="border-t border-slate-800 pt-3 hidden">
-        <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Resultados con Mayor Similitud Visual</h4>
-        <div id="matchList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar"></div>
+        <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Coincidencias con Mayor Similitud Visual</h4>
+        <div id="matchList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar touch-scroll"></div>
       </div>
     </div>
   </div>
 
-  <!-- SCRIPT LOGIC Y OPTIMIZACIONES -->
+  <!-- SCRIPT LOGIC MÓVIL + DESK -->
   <script>
-    // Clave API de Mapas
     const MAP_API_KEY = 'cb1_3yax_1_62a7917a038a98cc4759f31f';
 
-    // Configuración de enlaces de Google Sheets
     const SHEET_CONFIGS = [
       { id: '1EgudaTwmNvHi8eKPMQbCz8eD6fKS1GdrIuIp_R-xVfk', gid: '501282295', source: 'Abordamientos' },
       { id: '1rl28kCEfkpu9G7oly87NHw4_XGCsjWhSssMxa6Et9SY', gid: '1225183609', source: 'Detenciones' },
@@ -295,7 +328,6 @@
     let activeItemForPdf = null;
     let webcamStream = null;
 
-    // Función Debounce para acelerar búsquedas
     function debounce(func, wait = 150) {
       let timeout;
       return function(...args) {
@@ -305,23 +337,57 @@
     }
     const debouncedApplyFilters = debounce(applyFilters, 150);
 
-    // Inicializar Mapa Acelerado por Canvas con API Key
+    // Gestor de Interfaz Móvil
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebarDrawer');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      const isHidden = sidebar.classList.contains('-translate-x-full');
+      
+      if (isHidden) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    function switchMobileTab(tab) {
+      const cardsSec = document.getElementById('sectionCards');
+      const mapSec = document.getElementById('sectionMap');
+      const btnCards = document.getElementById('tabBtnCards');
+      const btnMap = document.getElementById('tabBtnMap');
+
+      if (tab === 'cards') {
+        cardsSec.classList.remove('hidden');
+        mapSec.classList.add('hidden');
+        mapSec.classList.remove('flex');
+        btnCards.className = 'flex-1 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white text-center';
+        btnMap.className = 'flex-1 py-1.5 text-xs font-bold rounded-md text-slate-400 text-center';
+      } else {
+        cardsSec.classList.add('hidden');
+        mapSec.classList.remove('hidden');
+        mapSec.classList.add('flex');
+        btnMap.className = 'flex-1 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white text-center';
+        btnCards.className = 'flex-1 py-1.5 text-xs font-bold rounded-md text-slate-400 text-center';
+        setTimeout(() => map.invalidateSize(), 200);
+      }
+    }
+
+    // Inicializar Mapa
     function initMap() {
       map = L.map('map', { preferCanvas: true }).setView([25.6866, -100.3161], 11);
       
-      // Integración de capa con API Key
       const tileUrl = `https://maps.geoapify.com/v1/tile/dark-matter/{z}/{x}/{y}.png?apiKey=${MAP_API_KEY}`;
       L.tileLayer(tileUrl, {
         attribution: '&copy; Geoapify &copy; OpenStreetMap',
-        maxZoom: 19,
-        apiKey: MAP_API_KEY
+        maxZoom: 19
       }).addTo(map);
 
       markersLayer = L.layerGroup().addTo(map);
       heatLayer = L.heatLayer([], { radius: 25, blur: 15, maxZoom: 17 });
     }
 
-    // Convertir URLs de Google Drive a URLs directas
     function parseDriveImageUrls(rawUrl) {
       if (!rawUrl) return [];
       const urls = rawUrl.split(',').map(s => s.trim());
@@ -338,7 +404,7 @@
       return parsed;
     }
 
-    // Sincronizar y Cargar Datos en PARALELO con Promise.all (Ultra Rápido)
+    // Descarga en paralelo ultra rápida
     async function syncData() {
       const icon = document.getElementById('syncIcon');
       icon.classList.add('fa-spin');
@@ -360,7 +426,7 @@
             });
           });
         } catch (err) {
-          console.warn('Error cargando fuente:', config, err);
+          console.warn('Error en fuente:', config, err);
         }
       });
 
@@ -369,7 +435,6 @@
       applyFilters();
     }
 
-    // Normalizar registros heterogéneos
     function normalizeRecords(rows, source) {
       rows.forEach((r, idx) => {
         const name = r['NOMBRE COMPLETO'] || r['NOMBRE DE DETENIDO CORRECT'] || `${r['NOMBRE']||''} ${r['APELLIDO PAT']||''} ${r['APELLIDO MAT']||''}`.trim();
@@ -416,7 +481,6 @@
       });
     }
 
-    // Aplicar Filtros de Búsqueda
     function applyFilters() {
       const qGen = document.getElementById('filterGeneral').value.toLowerCase();
       const qPlate = document.getElementById('filterPlates').value.toLowerCase();
@@ -448,20 +512,20 @@
       updateStats();
     }
 
-    // Renderizar Cards con DocumentFragment (Repintado único súper rápido)
     function renderResultsBatch() {
       const container = document.getElementById('resultsContainer');
       document.getElementById('resultsCount').innerText = filteredRecords.length;
+      document.getElementById('mobileCount').innerText = filteredRecords.length;
       container.innerHTML = '';
 
       if (filteredRecords.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 text-xs">No se encontraron expedientes con los criterios seleccionados.</div>`;
+        container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 text-xs">No se encontraron expedientes.</div>`;
         return;
       }
 
       const fragment = document.createDocumentFragment();
 
-      filteredRecords.slice(0, 48).forEach(item => {
+      filteredRecords.slice(0, 40).forEach(item => {
         const mainPhoto = item.photosPerson[0] || item.photosVehicle[0] || 'https://via.placeholder.com/300x200?text=SIN+FOTO';
         
         const card = document.createElement('div');
@@ -469,7 +533,7 @@
         card.onclick = () => openModal(item);
 
         card.innerHTML = `
-          <div class="h-40 bg-slate-900 relative overflow-hidden">
+          <div class="h-36 sm:h-40 bg-slate-900 relative overflow-hidden">
             <img src="${mainPhoto}" loading="lazy" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x200?text=ERROR+IMAGEN'" />
             <span class="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-md text-slate-300 text-[10px] px-2 py-0.5 rounded border border-slate-700 font-semibold">
               ${item.source}
@@ -478,10 +542,10 @@
           </div>
           <div class="p-3 flex-1 flex flex-col justify-between space-y-2">
             <div>
-              <h3 class="font-bold text-sm text-white line-clamp-1">${item.name}</h3>
-              <p class="text-xs text-yellow-400 font-medium">Alias: ${item.alias}</p>
+              <h3 class="font-bold text-xs sm:text-sm text-white line-clamp-1">${item.name}</h3>
+              <p class="text-[11px] text-yellow-400 font-medium">Alias: ${item.alias}</p>
             </div>
-            <div class="text-[11px] text-slate-400 space-y-1">
+            <div class="text-[11px] text-slate-400 space-y-0.5">
               <p><i class="fa-solid fa-car text-slate-500"></i> ${item.brand} ${item.model} (${item.color})</p>
               <p class="line-clamp-1"><i class="fa-solid fa-location-dot text-slate-500"></i> ${item.location}</p>
             </div>
@@ -493,7 +557,6 @@
       container.appendChild(fragment);
     }
 
-    // Cambiar Modo de Mapa: Marcadores vs Heatmap
     function setMapMode(mode) {
       currentMapMode = mode;
       const btnM = document.getElementById('btnMapMarkers');
@@ -513,7 +576,6 @@
       renderMapData();
     }
 
-    // Renderizar Marcadores / Mapa de Calor
     function renderMapData() {
       markersLayer.clearLayers();
       const heatPoints = [];
@@ -532,7 +594,7 @@
               <div class="text-slate-900 text-xs">
                 <strong>${item.name}</strong><br/>
                 <span>${item.brand} - ${item.plates}</span><br/>
-                <button onclick="openModalById('${item.id}')" class="mt-1 bg-blue-600 text-white px-2 py-0.5 rounded text-[10px]">Ver Expediente</button>
+                <button onclick="openModalById('${item.id}')" class="mt-1 bg-blue-600 text-white px-2 py-0.5 rounded text-[10px]">Ver Dossier</button>
               </div>
             `);
             markersLayer.addLayer(marker);
@@ -547,14 +609,12 @@
       }
     }
 
-    // Actualizar Estadísticas
     function updateStats() {
       document.getElementById('statTotal').innerText = allRecords.length;
       document.getElementById('statPhotos').innerText = allRecords.filter(i => i.photosPerson.length > 0 || i.photosVehicle.length > 0).length;
       document.getElementById('statGps').innerText = allRecords.filter(i => i.lat && i.lng).length;
     }
 
-    // Abrir Modal de Expediente
     function openModal(item) {
       activeItemForPdf = item;
       document.getElementById('mFullName').innerText = item.name;
@@ -575,11 +635,11 @@
       
       const allPhotos = [...item.photosPerson, ...item.photosId, ...item.photosVehicle];
       if (allPhotos.length === 0) {
-        gallery.innerHTML = `<p class="text-slate-500 col-span-full">Sin fotografías adjuntas en el registro.</p>`;
+        gallery.innerHTML = `<p class="text-slate-500 col-span-full">Sin fotografías en el registro.</p>`;
       } else {
         allPhotos.forEach(p => {
           gallery.innerHTML += `
-            <div class="h-32 bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
+            <div class="h-28 sm:h-32 bg-slate-950 rounded-lg overflow-hidden border border-slate-800">
               <img src="${p}" loading="lazy" class="w-full h-full object-cover" onclick="window.open('${p}', '_blank')" />
             </div>
           `;
@@ -598,15 +658,13 @@
       document.getElementById('dossierModal').classList.add('hidden');
     }
 
-    // Exportación a PDF con html2pdf.js
     function exportDossierToPDF() {
       if (!activeItemForPdf) return;
-      
       const element = document.getElementById('dossierPrintArea');
       const filename = `Dossier_${activeItemForPdf.name.replace(/\s+/g, '_')}.pdf`;
       
       const opt = {
-        margin:       0.4,
+        margin:       0.3,
         filename:     filename,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, logging: false },
@@ -616,7 +674,6 @@
       html2pdf().set(opt).from(element).save();
     }
 
-    // Reconocimiento Fotográfico
     function openCameraModal() {
       document.getElementById('cameraModal').classList.remove('hidden');
     }
@@ -632,13 +689,14 @@
     async function startCamera() {
       try {
         const video = document.getElementById('webcam');
-        webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        // Usar cámara trasera en dispositivos móviles si existe
+        webcamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
         video.srcObject = webcamStream;
         video.classList.remove('hidden');
         document.getElementById('camPlaceholder').classList.add('hidden');
         document.getElementById('btnSnap').classList.remove('hidden');
       } catch (err) {
-        alert('No se pudo acceder a la cámara del dispositivo.');
+        alert('No se pudo acceder al visor de cámara. Intenta con la opción de "Toma de Foto Nativa".');
       }
     }
 
@@ -673,14 +731,14 @@
       const resultsDiv = document.getElementById('matchResults');
       const matchList = document.getElementById('matchList');
       resultsDiv.classList.remove('hidden');
-      matchList.innerHTML = '<p class="text-slate-400 text-xs">Escaneando coincidencias en la base de datos...</p>';
+      matchList.innerHTML = '<p class="text-slate-400 text-xs">Analizando coincidencia en la base de datos...</p>';
 
       setTimeout(() => {
         matchList.innerHTML = '';
         const candidates = allRecords.filter(r => r.photosPerson.length > 0);
         
         if (candidates.length === 0) {
-          matchList.innerHTML = '<p class="text-slate-500 text-xs">No hay fotografías registradas para comparar.</p>';
+          matchList.innerHTML = '<p class="text-slate-500 text-xs">No hay fotos en base de datos para comparar.</p>';
           return;
         }
 
@@ -692,15 +750,15 @@
         matches.forEach(m => {
           matchList.innerHTML += `
             <div onclick="openModalById('${m.record.id}')" class="p-2 bg-slate-950 border border-slate-800 hover:border-emerald-500 rounded-lg flex items-center justify-between cursor-pointer">
-              <div class="flex items-center gap-3">
-                <img src="${m.record.photosPerson[0]}" loading="lazy" class="w-10 h-10 object-cover rounded-full" />
+              <div class="flex items-center gap-2.5">
+                <img src="${m.record.photosPerson[0]}" loading="lazy" class="w-9 h-9 object-cover rounded-full" />
                 <div>
                   <h5 class="font-bold text-white text-xs">${m.record.name}</h5>
                   <p class="text-[10px] text-slate-400">Alias: ${m.record.alias} | Placas: ${m.record.plates||'N/A'}</p>
                 </div>
               </div>
               <span class="bg-emerald-950 text-emerald-400 font-bold text-xs px-2 py-1 rounded border border-emerald-800">
-                ${m.score}% Similitud
+                ${m.score}%
               </span>
             </div>
           `;
@@ -708,7 +766,6 @@
       }, 400);
     }
 
-    // Inicialización
     window.onload = () => {
       initMap();
       syncData();
